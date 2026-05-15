@@ -43,9 +43,10 @@ const TONES = [
 ]
 
 const AI_PROVIDERS = [
-  { value: 'pollinations', label: '⚡ Pollinations AI (gratis, sin key)' },
-  { value: 'claude', label: '🧠 Claude Haiku (necesita API Key)' },
-  { value: 'openai', label: '💡 GPT-4o Mini (necesita API Key)' },
+  { value: 'pollinations', label: '⚡ Pollinations AI (gratis, sin key)', keyLabel: null, keyPlaceholder: null, link: null },
+  { value: 'groq', label: '🦙 Groq — Llama 3.3 70B (gratis con key)', keyLabel: 'Groq API Key', keyPlaceholder: 'gsk_...', link: 'https://console.groq.com/keys' },
+  { value: 'claude', label: '🧠 Claude Haiku (Anthropic)', keyLabel: 'Anthropic API Key', keyPlaceholder: 'sk-ant-...', link: 'https://console.anthropic.com' },
+  { value: 'openai', label: '💡 GPT-4o Mini (OpenAI)', keyLabel: 'OpenAI API Key', keyPlaceholder: 'sk-...', link: 'https://platform.openai.com/api-keys' },
 ]
 
 const JMC_DEFAULTS = {
@@ -431,29 +432,40 @@ export default function ContentStudioPage() {
                           {AI_PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                         </select>
                       </div>
-                      {aiProvider !== 'pollinations' && (
-                        <div>
-                          <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>
-                            API Key de {aiProvider === 'claude' ? 'Anthropic' : 'OpenAI'}
-                          </label>
-                          <div className="relative">
-                            <input
-                              type={showAiKey ? 'text' : 'password'}
-                              value={aiKey}
-                              onChange={e => setAiKey(e.target.value)}
-                              placeholder={aiProvider === 'claude' ? 'sk-ant-...' : 'sk-...'}
-                              className="w-full px-3 py-2 pr-10 rounded-lg text-sm focus:outline-none"
-                              style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1px solid ${pal.accent}30`, color: activePalette.isDark ? pal.white : '#2A2520' }}
-                            />
-                            <button onClick={() => setShowAiKey(!showAiKey)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: pal.accent + '80' }}>
-                              {showAiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
+                      {aiProvider !== 'pollinations' && (() => {
+                        const prov = AI_PROVIDERS.find(p => p.value === aiProvider)
+                        return (
+                          <div>
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-xs font-medium uppercase tracking-widest" style={{ color: pal.accent }}>
+                                {prov?.keyLabel || 'API Key'}
+                              </label>
+                              {prov?.link && (
+                                <a href={prov.link} target="_blank" rel="noopener noreferrer"
+                                  className="text-xs hover:underline" style={{ color: pal.accent + 'AA' }}>
+                                  Obtener key gratis →
+                                </a>
+                              )}
+                            </div>
+                            <div className="relative">
+                              <input
+                                type={showAiKey ? 'text' : 'password'}
+                                value={aiKey}
+                                onChange={e => setAiKey(e.target.value)}
+                                placeholder={prov?.keyPlaceholder || 'API Key...'}
+                                className="w-full px-3 py-2 pr-10 rounded-lg text-sm focus:outline-none"
+                                style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1px solid ${pal.accent}30`, color: activePalette.isDark ? pal.white : '#2A2520' }}
+                              />
+                              <button onClick={() => setShowAiKey(!showAiKey)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: pal.accent + '80' }}>
+                                {showAiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                            <p className="text-xs mt-1" style={{ color: pal.accent + '60' }}>
+                              La key se guarda solo en tu navegador — nunca sale de tu dispositivo
+                            </p>
                           </div>
-                          <p className="text-xs mt-1" style={{ color: pal.accent + '60' }}>
-                            {aiProvider === 'claude' ? 'console.anthropic.com' : 'platform.openai.com'} — La key se guarda solo en tu navegador
-                          </p>
-                        </div>
-                      )}
+                        )
+                      })()}
                     </div>
                   )}
                 </div>

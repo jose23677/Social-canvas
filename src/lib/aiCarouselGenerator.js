@@ -1,6 +1,6 @@
 // ── Pollinations Text API — GRATIS, sin key ──────────────────────────────────
-// Docs: https://text.pollinations.ai
-const POLLINATIONS_TEXT = 'https://text.pollinations.ai/'
+// Docs: https://github.com/pollinations/pollinations/blob/master/APIDOCS.md
+const POLLINATIONS_TEXT = 'https://text.pollinations.ai/openai'
 
 const SYSTEM_PROMPT = `Eres un director creativo de élite, experto en:
 - Marketing médico-estético premium para Instagram
@@ -97,19 +97,27 @@ async function callPollinations(userMessage) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      model: 'openai-large',
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user', content: userMessage },
       ],
-      model: 'openai-large',
       seed: Math.floor(Math.random() * 99999),
-      jsonMode: true,
+      response_format: { type: 'json_object' },
       private: true,
     }),
   })
-  if (!res.ok) throw new Error(`Pollinations text: ${res.status}`)
-  const text = await res.text()
-  return JSON.parse(text)
+  if (!res.ok) {
+    const errText = await res.text().catch(() => '')
+    throw new Error(`Pollinations text: ${res.status} ${errText.slice(0, 100)}`)
+  }
+  const data = await res.json()
+  // Response is OpenAI-compatible: choices[0].message.content
+  const content = data?.choices?.[0]?.message?.content
+  if (!content) throw new Error('Pollinations no devolvió contenido')
+  // Parse JSON from content (may have markdown fences)
+  const clean = content.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
+  return JSON.parse(clean)
 }
 
 // ── Call Claude API ───────────────────────────────────────────────────────────
@@ -155,6 +163,30 @@ async function callOpenAI(userMessage, apiKey) {
     }),
   })
   if (!res.ok) throw new Error(`OpenAI: ${res.status}`)
+  const data = await res.json()
+  return JSON.parse(data.choices[0].message.content)
+}
+
+// ── Call Groq (free tier — Llama 3.3 70B) ────────────────────────────────────
+async function callGroq(userMessage, apiKey) {
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: userMessage },
+      ],
+      response_format: { type: 'json_object' },
+      max_tokens: 4096,
+      temperature: 0.7,
+    }),
+  })
+  if (!res.ok) throw new Error(`Groq: ${res.status}`)
   const data = await res.json()
   return JSON.parse(data.choices[0].message.content)
 }
@@ -210,6 +242,8 @@ export async function generateCarouselFromPrompt({
     aiData = await callClaude(userMessage, apiKey)
   } else if (aiProvider === 'openai' && apiKey) {
     aiData = await callOpenAI(userMessage, apiKey)
+  } else if (aiProvider === 'groq' && apiKey) {
+    aiData = await callGroq(userMessage, apiKey)
   } else {
     aiData = await callPollinations(userMessage)
   }
