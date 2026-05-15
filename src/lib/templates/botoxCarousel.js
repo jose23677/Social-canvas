@@ -238,7 +238,21 @@ export const botoxCarousel = {
   ],
 }
 
+import { gammaCarousel } from './gammaCarousel'
+
 export const TEMPLATES = [
+  {
+    id: 'gamma-botox-premium',
+    title: '✦ Gamma · Arte de la Juventud',
+    subtitle: 'Generado con Gamma AI · Flux images · Ultra premium',
+    category: 'Medicina Estética',
+    slides: 10,
+    color: '#C4AA80',
+    emoji: '◈',
+    data: gammaCarousel,
+    tags: ['gamma', 'flux', 'premium', 'botox'],
+    badge: 'GAMMA AI',
+  },
   {
     id: 'botox-premium',
     title: 'Botox Premium',

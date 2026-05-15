@@ -1,8 +1,9 @@
-import { useState } from 'react'
-import { Sparkles, ChevronRight, CheckCircle, Loader2, Edit3, Star, Zap, LayoutGrid, Wand2, Brain, ChevronDown, ChevronUp, Eye, EyeOff } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { Sparkles, ChevronRight, CheckCircle, Loader2, Edit3, Star, Zap, LayoutGrid, Wand2, Brain, ChevronDown, ChevronUp, Eye, EyeOff, Globe, Video, FileText, ExternalLink, ImageIcon } from 'lucide-react'
 import { TEMPLATES } from '../lib/templates/botoxCarousel'
-import { generatePollinationsUrl } from '../lib/aiProviders'
+import { generatePollinationsUrl, generateMidjourney, pollMidjourney } from '../lib/aiProviders'
 import { generateCarouselFromPrompt } from '../lib/aiCarouselGenerator'
+import { extractFromUrl, extractFromYoutube, extractFromPdf } from '../lib/contentExtractor'
 import { useStore } from '../store/useStore'
 import { Button, Card, Input, Select, cn } from '../components/UI'
 import { useNavigate } from 'react-router-dom'
@@ -66,15 +67,26 @@ export default function ContentStudioPage() {
   const [mode, setMode] = useState('ai')
   const [selectedTemplate, setSelectedTemplate] = useState(null)
 
-  // AI prompt state
+  // AI input type: 'prompt' | 'url' | 'youtube' | 'pdf'
+  const [aiInputType, setAiInputType] = useState('prompt')
   const [aiTopic, setAiTopic] = useState('')
   const [aiExtra, setAiExtra] = useState('')
+  const [aiUrl, setAiUrl] = useState('')
+  const [aiYoutubeUrl, setAiYoutubeUrl] = useState('')
+  const [aiPdfFile, setAiPdfFile] = useState(null)
+  const [aiExtractedContent, setAiExtractedContent] = useState(null)
+  const [aiExtracting, setAiExtracting] = useState(false)
   const [aiTone, setAiTone] = useState('educational')
   const [aiProvider, setAiProvider] = useState('pollinations')
+  const [imageProvider, setImageProvider] = useState('flux') // 'flux' | 'midjourney'
+  const [midjourneyKey, setMidjourneyKey] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('sc_inline_keys') || '{}').midjourney || '' } catch { return '' }
+  })
   const [aiKey, setAiKey] = useState('')
   const [showAiKey, setShowAiKey] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [aiMeta, setAiMeta] = useState(null)
+  const pdfRef = useRef(null)
 
   // Brand
   const [brand, setBrand] = useState(JMC_DEFAULTS)
@@ -104,17 +116,76 @@ export default function ContentStudioPage() {
     return obj
   }
 
+  // ── Extract content from URL / YouTube / PDF ─────────────────────────────
+  const extractContent = async () => {
+    setAiExtracting(true)
+    try {
+      let result
+      if (aiInputType === 'url') {
+        if (!aiUrl.trim()) return toast.error('Ingresa una URL válida')
+        result = await extractFromUrl(aiUrl)
+        toast.success('URL leída correctamente ✓')
+      } else if (aiInputType === 'youtube') {
+        if (!aiYoutubeUrl.trim()) return toast.error('Ingresa una URL de YouTube')
+        result = await extractFromYoutube(aiYoutubeUrl)
+        toast.success(`Video encontrado: ${result.title}`)
+      } else if (aiInputType === 'pdf') {
+        if (!aiPdfFile) return toast.error('Selecciona un archivo PDF')
+        result = await extractFromPdf(aiPdfFile)
+        toast.success(`PDF leído: ${result.fileName}`)
+      }
+      setAiExtractedContent(result)
+    } catch (err) {
+      toast.error(err.message)
+    } finally {
+      setAiExtracting(false)
+    }
+  }
+
+  // ── Generate images (Flux or Midjourney) ─────────────────────────────────
+  const generateSlideImage = async (prompt, style, gammaImage) => {
+    // Priority: gammaImage → midjourney → flux
+    if (gammaImage) return gammaImage
+    if (imageProvider === 'midjourney' && midjourneyKey) {
+      try {
+        const jobId = await generateMidjourney(prompt, midjourneyKey)
+        // Poll for result
+        for (let i = 0; i < 30; i++) {
+          await new Promise(r => setTimeout(r, 5000))
+          const url = await pollMidjourney(jobId, midjourneyKey)
+          if (url) return url
+        }
+      } catch { /* fallback to flux */ }
+    }
+    return generatePollinationsUrl(prompt, style, 820, 1024, 'flux')
+  }
+
   // ── Generate from AI prompt ──────────────────────────────────────────────
   const generateFromAI = async () => {
-    if (!aiTopic.trim()) return toast.error('Escribe el tema del carrusel')
+    // Determine the topic based on input type
+    let effectiveTopic = aiTopic
+    let effectiveExtra = aiExtra
+
+    if (aiInputType !== 'prompt') {
+      if (!aiExtractedContent) {
+        await extractContent()
+        return // Let user review extracted content first
+      }
+      effectiveTopic = aiExtractedContent.title || aiExtractedContent.fileName || aiUrl || aiYoutubeUrl
+      effectiveExtra = aiExtractedContent.text + (aiExtra ? '\n\n' + aiExtra : '')
+    }
+
+    if (!effectiveTopic && !effectiveExtra) return toast.error('Ingresa el contenido para el carrusel')
+    if (!effectiveTopic) effectiveTopic = 'Carrusel basado en contenido importado'
+
     setGenerating(true)
     setGenProgress(0)
     setGenStatus('La IA está investigando y estructurando el contenido...')
 
     try {
       const { slides: aiSlides, meta } = await generateCarouselFromPrompt({
-        topic: aiTopic,
-        extraInfo: aiExtra,
+        topic: effectiveTopic,
+        extraInfo: effectiveExtra,
         tone: aiTone,
         brand,
         aiProvider,
@@ -122,19 +193,26 @@ export default function ContentStudioPage() {
       })
 
       setAiMeta(meta)
-      setGenStatus('Generando imágenes para cada slide...')
+      setGenStatus(imageProvider === 'midjourney' ? 'Generando con Midjourney (puede tomar varios minutos)...' : 'Generando imágenes ultra-realistas con Flux...')
 
       const palette = PALETTE_MAP[brand.style] || PALETTE_MAP['luxury-nude']
       const results = []
 
       for (let i = 0; i < aiSlides.length; i++) {
         const slide = aiSlides[i]
-        setGenStatus(`Generando imagen ${i + 1} de ${aiSlides.length}`)
+        setGenStatus(imageProvider === 'midjourney'
+          ? `Midjourney: imagen ${i + 1}/${aiSlides.length} — puede tardar 1-3 min...`
+          : `Flux: imagen ${i + 1} de ${aiSlides.length}`)
         setGenProgress(Math.round((i / aiSlides.length) * 100))
+        const imageUrl = await generateSlideImage(
+          slide.imagePrompt || slide.elements?.label || effectiveTopic,
+          slide.imageStyle || 'photorealistic',
+          slide.gammaImage || null
+        )
         results.push({
           ...slide,
           elements: resolveObj(slide.elements),
-          imageUrl: generatePollinationsUrl(slide.imagePrompt || slide.elements.label, slide.imageStyle || 'photorealistic', 820, 1024),
+          imageUrl,
           palette,
           brandLogo: activePalette.isDark ? activePalette.logo : activePalette.logoLight,
           isDark: slide.isDark || activePalette.isDark,
@@ -165,17 +243,22 @@ export default function ContentStudioPage() {
 
     for (let i = 0; i < slides.length; i++) {
       const slide = slides[i]
-      setGenStatus(`Generando slide ${i + 1} de ${slides.length}`)
+      const hasGamma = !!slide.gammaImage
+      setGenStatus(hasGamma
+        ? `Cargando imagen Gamma · Slide ${i + 1}/${slides.length}`
+        : `Generando imagen Flux · Slide ${i + 1}/${slides.length}`)
       setGenProgress(Math.round((i / slides.length) * 100))
+      const imageUrl = slide.gammaImage || generatePollinationsUrl(slide.imagePrompt, slide.imageStyle || 'luxury', 820, 1024, 'flux')
       results.push({
         ...slide,
         elements: resolveObj(slide.elements),
-        imageUrl: generatePollinationsUrl(slide.imagePrompt, slide.imageStyle, 820, 1024),
+        imageUrl,
         palette,
         brandLogo: activePalette.isDark ? activePalette.logo : activePalette.logoLight,
         isDark: slide.isDark || activePalette.isDark,
+        hasGammaImage: hasGamma,
       })
-      await new Promise(r => setTimeout(r, 280))
+      await new Promise(r => setTimeout(r, 180))
     }
     setGenProgress(100)
     setGenStatus('¡Carrusel listo!')
@@ -275,13 +358,11 @@ export default function ContentStudioPage() {
                     </div>
                   </div>
                   <p className="text-[#C4AA80]/90 text-sm leading-relaxed mb-4">
-                    Describe el tema en tus palabras. La IA investiga, estructura y redacta los 10 slides completos con copy experto, datos reales y ángulo de conversión.
+                    Describe un tema, pega una URL, sube un PDF o pon un video de YouTube — la IA crea los 10 slides completos.
                   </p>
-                  <ul className="space-y-2">
-                    {['Investiga el tema automáticamente', 'Genera copy premium en segundos', 'Adapta el contenido a tu marca', 'Cualquier tema, sin límites'].map(t => (
-                      <li key={t} className="flex items-center gap-2 text-xs text-[#F5F0E8]/70">
-                        <span className="text-[#C4AA80]">✦</span>{t}
-                      </li>
+                  <ul className="space-y-1.5">
+                    {['📝 Prompt de texto libre', '🌐 URL de artículo o web', '🎬 Video de YouTube', '📄 Archivo PDF'].map(t => (
+                      <li key={t} className="text-xs text-[#F5F0E8]/80">{t}</li>
                     ))}
                   </ul>
                   <div className="mt-5 flex items-center gap-2 text-[#C4AA80] text-sm font-medium">
@@ -352,19 +433,39 @@ export default function ContentStudioPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {/* Main topic */}
+                    {/* Input type selector */}
+                    <div>
+                      <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>Fuente del contenido</label>
+                      <div className="grid grid-cols-4 gap-1.5">
+                        {[
+                          { v: 'prompt', icon: Brain, label: 'Texto' },
+                          { v: 'url', icon: Globe, label: 'URL Web' },
+                          { v: 'youtube', icon: Youtube, label: 'YouTube' },
+                          { v: 'pdf', icon: FileText, label: 'PDF' },
+                        ].map(({ v, icon: Icon, label }) => (
+                          <button key={v} onClick={() => { setAiInputType(v); setAiExtractedContent(null) }}
+                            className="flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 text-xs transition-all"
+                            style={{
+                              border: `2px solid ${aiInputType === v ? pal.accent : pal.accent + '25'}`,
+                              background: aiInputType === v ? pal.accent + '18' : 'transparent',
+                              color: aiInputType === v ? (activePalette.isDark ? pal.white : '#2A2520') : pal.accent + '80',
+                              fontWeight: aiInputType === v ? 600 : 400,
+                            }}>
+                            <Icon className="w-4 h-4" />{label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Input based on type */}
+                    {aiInputType === 'prompt' && (
                     <div>
                       <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>
                         Tema principal *
                       </label>
                       <textarea
-                        className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none focus:ring-2 transition-all resize-none"
-                        style={{
-                          background: activePalette.isDark ? pal.bg : '#F7F3EE',
-                          border: `1.5px solid ${pal.accent}40`,
-                          color: activePalette.isDark ? pal.white : '#2A2520',
-                          '--tw-ring-color': pal.accent,
-                        }}
+                        className="w-full px-4 py-3 rounded-xl text-sm focus:outline-none transition-all resize-none"
+                        style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1.5px solid ${pal.accent}40`, color: activePalette.isDark ? pal.white : '#2A2520' }}
                         rows={3}
                         placeholder="Ej: Quiero un carrusel educativo sobre rellenos dérmicos con ácido hialurónico para mi clínica de medicina estética en Caracas. Trabajamos con productos Juvederm y Restylane."
                         value={aiTopic}
@@ -374,6 +475,81 @@ export default function ContentStudioPage() {
                         Sé específico: menciona el tratamiento, tu audiencia objetivo, ciudad, productos o lo que quieras destacar
                       </p>
                     </div>
+                    )}
+
+                    {/* URL input */}
+                    {aiInputType === 'url' && (
+                      <div className="space-y-3">
+                        <label className="block text-xs font-medium uppercase tracking-widest mb-1" style={{ color: pal.accent }}>URL del artículo o página web</label>
+                        <div className="flex gap-2">
+                          <input type="url" value={aiUrl} onChange={e => { setAiUrl(e.target.value); setAiExtractedContent(null) }}
+                            placeholder="https://ejemplo.com/articulo-botox"
+                            className="flex-1 px-3 py-2.5 rounded-xl text-sm focus:outline-none"
+                            style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1.5px solid ${pal.accent}40`, color: activePalette.isDark ? pal.white : '#2A2520' }} />
+                          <button onClick={extractContent} disabled={aiExtracting || !aiUrl}
+                            className="px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all disabled:opacity-50"
+                            style={{ background: pal.accent, color: pal.dark }}>
+                            {aiExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Globe className="w-4 h-4" />}
+                            Leer URL
+                          </button>
+                        </div>
+                        {aiExtractedContent && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: pal.accent + '15', color: pal.accent }}>✓ Contenido extraído correctamente — la IA lo usará como base del carrusel</p>}
+                      </div>
+                    )}
+
+                    {/* YouTube input */}
+                    {aiInputType === 'youtube' && (
+                      <div className="space-y-3">
+                        <label className="block text-xs font-medium uppercase tracking-widest mb-1" style={{ color: pal.accent }}>URL del video de YouTube</label>
+                        <div className="flex gap-2">
+                          <input type="url" value={aiYoutubeUrl} onChange={e => { setAiYoutubeUrl(e.target.value); setAiExtractedContent(null) }}
+                            placeholder="https://youtube.com/watch?v=..."
+                            className="flex-1 px-3 py-2.5 rounded-xl text-sm focus:outline-none"
+                            style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1.5px solid ${pal.accent}40`, color: activePalette.isDark ? pal.white : '#2A2520' }} />
+                          <button onClick={extractContent} disabled={aiExtracting || !aiYoutubeUrl}
+                            className="px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all disabled:opacity-50"
+                            style={{ background: pal.accent, color: pal.dark }}>
+                            {aiExtracting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
+                            Obtener video
+                          </button>
+                        </div>
+                        {aiExtractedContent && (
+                          <div className="flex items-center gap-3 p-3 rounded-xl" style={{ background: pal.accent + '15' }}>
+                            {aiExtractedContent.thumbnail && <img src={aiExtractedContent.thumbnail} alt="" className="w-16 h-10 rounded object-cover" />}
+                            <div>
+                              <p className="text-xs font-semibold" style={{ color: activePalette.isDark ? pal.white : '#2A2520' }}>{aiExtractedContent.title}</p>
+                              <p className="text-xs" style={{ color: pal.accent }}>{aiExtractedContent.author}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* PDF input */}
+                    {aiInputType === 'pdf' && (
+                      <div className="space-y-3">
+                        <label className="block text-xs font-medium uppercase tracking-widest mb-1" style={{ color: pal.accent }}>Archivo PDF</label>
+                        <div
+                          onClick={() => pdfRef.current?.click()}
+                          className="border-2 border-dashed rounded-xl p-5 flex flex-col items-center gap-2 cursor-pointer transition-all"
+                          style={{ borderColor: aiPdfFile ? pal.accent : pal.accent + '30', background: aiPdfFile ? pal.accent + '10' : 'transparent' }}>
+                          <FileText className="w-6 h-6" style={{ color: pal.accent }} />
+                          {aiPdfFile
+                            ? <p className="text-sm font-medium" style={{ color: pal.accent }}>{aiPdfFile.name}</p>
+                            : <p className="text-sm" style={{ color: pal.accent + '80' }}>Haz clic para seleccionar un PDF</p>}
+                        </div>
+                        <input ref={pdfRef} type="file" accept=".pdf" className="hidden"
+                          onChange={e => { setAiPdfFile(e.target.files[0]); setAiExtractedContent(null) }} />
+                        {aiPdfFile && !aiExtractedContent && (
+                          <button onClick={extractContent} disabled={aiExtracting}
+                            className="w-full py-2.5 rounded-xl text-sm font-medium flex items-center justify-center gap-2 transition-all"
+                            style={{ background: pal.accent, color: pal.dark }}>
+                            {aiExtracting ? <><Loader2 className="w-4 h-4 animate-spin" /> Leyendo PDF...</> : <><FileText className="w-4 h-4" /> Procesar PDF</>}
+                          </button>
+                        )}
+                        {aiExtractedContent && <p className="text-xs px-3 py-2 rounded-lg" style={{ background: pal.accent + '15', color: pal.accent }}>✓ PDF procesado — la IA creará el carrusel con este contenido</p>}
+                      </div>
+                    )}
 
                     {/* Extra info */}
                     <div>
@@ -421,9 +597,43 @@ export default function ContentStudioPage() {
                     {showAdvanced ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   {showAdvanced && (
-                    <div className="px-5 pb-5 space-y-3 border-t" style={{ borderColor: pal.accent + '20' }}>
+                    <div className="px-5 pb-5 space-y-4 border-t" style={{ borderColor: pal.accent + '20' }}>
+
+                      {/* Image provider */}
                       <div className="pt-3">
-                        <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>Motor IA</label>
+                        <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>🖼 Generador de imágenes</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            { v: 'flux', label: '⚡ Flux (gratis · hiperrealista)', desc: 'Pollinations Flux · Sin key' },
+                            { v: 'midjourney', label: '🎨 Midjourney (best quality)', desc: 'Requiere key de useapi.net' },
+                          ].map(opt => (
+                            <button key={opt.v} onClick={() => setImageProvider(opt.v)}
+                              className="p-3 rounded-xl border-2 text-left transition-all"
+                              style={{ border: `2px solid ${imageProvider === opt.v ? pal.accent : pal.accent + '25'}`, background: imageProvider === opt.v ? pal.accent + '15' : 'transparent' }}>
+                              <p className="text-xs font-semibold" style={{ color: activePalette.isDark ? pal.white : '#2A2520' }}>{opt.label}</p>
+                              <p className="text-[10px] mt-0.5" style={{ color: pal.accent + '80' }}>{opt.desc}</p>
+                            </button>
+                          ))}
+                        </div>
+                        {imageProvider === 'midjourney' && (
+                          <div className="mt-2">
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="text-xs" style={{ color: pal.accent + '80' }}>Midjourney Proxy Key (useapi.net)</label>
+                              <a href="https://useapi.net" target="_blank" rel="noopener noreferrer" className="text-xs hover:underline" style={{ color: pal.accent }}>Obtener →</a>
+                            </div>
+                            <input type="password" value={midjourneyKey}
+                              onChange={e => { setMidjourneyKey(e.target.value); const k = JSON.parse(localStorage.getItem('sc_inline_keys') || '{}'); k.midjourney = e.target.value; localStorage.setItem('sc_inline_keys', JSON.stringify(k)) }}
+                              placeholder="Bearer token..."
+                              className="w-full px-3 py-2 rounded-lg text-sm focus:outline-none"
+                              style={{ background: activePalette.isDark ? pal.bg : '#F7F3EE', border: `1px solid ${pal.accent}30`, color: activePalette.isDark ? pal.white : '#2A2520' }} />
+                            <p className="text-xs mt-1" style={{ color: pal.accent + '60' }}>⚠ Midjourney tarda 1-3 min por imagen. El carrusel puede demorar 15-30 minutos en generarse.</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Text AI provider */}
+                      <div>
+                        <label className="block text-xs font-medium uppercase tracking-widest mb-2" style={{ color: pal.accent }}>🧠 Motor de texto IA</label>
                         <select
                           value={aiProvider}
                           onChange={e => setAiProvider(e.target.value)}
@@ -563,6 +773,7 @@ export default function ContentStudioPage() {
               )}
               {[
                 { k: mode === 'ai' ? 'Motor IA' : 'Template', v: mode === 'ai' ? AI_PROVIDERS.find(p => p.value === aiProvider)?.label?.split(' (')[0] : selectedTemplate?.title },
+                { k: 'Imágenes', v: mode === 'ai' ? (imageProvider === 'midjourney' ? '🎨 Midjourney' : '⚡ Flux (Pollinations)') : (selectedTemplate?.data?.slides?.some(s => s.gammaImage) ? '◈ Gamma AI' : '⚡ Flux') },
                 { k: 'Tono', v: mode === 'ai' ? TONES.find(t => t.value === aiTone)?.label : 'Premium editorial' },
                 { k: 'Médico', v: brand.doctor || '—' },
                 { k: 'Paleta', v: activePalette.name },
@@ -626,10 +837,24 @@ export default function ContentStudioPage() {
                 style={{ background: `linear-gradient(135deg, ${pal.dark}, ${pal.accent})`, color: pal.white }}>
                 <Edit3 className="w-4 h-4" /> Abrir en editor
               </button>
+              {selectedTemplate?.id === 'gamma-botox-premium' && (
+                <a href="https://gamma.app/docs/bjs30qsrpa3skoy" target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border transition-all hover:scale-105"
+                  style={{ borderColor: pal.accent + '50', color: pal.accent }}>
+                  <ExternalLink className="w-4 h-4" /> Ver en Gamma
+                </a>
+              )}
               <Button variant="secondary" className="gap-2" onClick={() => { setStep('mode'); setGeneratedSlides([]); setAiMeta(null) }}>
                 <Sparkles className="w-4 h-4" /> Nuevo carrusel
               </Button>
             </div>
+            {generatedSlides.some(s => s.hasGammaImage) && (
+              <div className="flex items-center justify-center gap-2 text-xs py-2 px-4 rounded-full mx-auto w-fit"
+                style={{ background: pal.accent + '15', color: pal.accent }}>
+                <ImageIcon className="w-3.5 h-3.5" />
+                Imágenes generadas con Gamma AI · Flux model
+              </div>
+            )}
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {generatedSlides.map((slide, i) => (

@@ -1,20 +1,24 @@
 // ─── Pollinations AI — GRATIS, sin API key ─────────────────────────────────
+// Model: flux → hyper-realistic, state-of-the-art quality
 const STYLE_SUFFIX = {
-  photorealistic: 'photorealistic, ultra detailed, 8k, sharp focus',
-  artistic: 'digital art, vibrant colors, artistic, creative',
-  cinematic: 'cinematic photography, dramatic lighting, film grain',
-  illustration: 'clean illustration, vector style, graphic design',
-  instagram: 'instagram aesthetic, lifestyle, warm tones, professional',
+  photorealistic: 'photorealistic, ultra detailed, 8k, sharp focus, professional photography',
+  artistic: 'digital art, vibrant colors, artistic, creative, painterly',
+  cinematic: 'cinematic photography, dramatic lighting, film grain, anamorphic lens',
+  illustration: 'clean illustration, vector style, graphic design, flat design',
+  instagram: 'instagram aesthetic, lifestyle, warm golden tones, professional editorial',
+  hyperreal: 'hyperrealistic, ultra photographic, medium format camera, skin texture, bokeh',
+  luxury: 'luxury editorial photography, Vogue quality, champagne lighting, ultra premium',
 }
 
-export function generatePollinationsUrl(prompt, style = 'photorealistic', width = 1024, height = 1024) {
+// Default: flux model for maximum realism
+export function generatePollinationsUrl(prompt, style = 'photorealistic', width = 1024, height = 1024, model = 'flux') {
   const seed = Math.floor(Math.random() * 999999)
   const full = `${prompt}, ${STYLE_SUFFIX[style] || STYLE_SUFFIX.photorealistic}`
-  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?model=${model}&width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`
 }
 
-export function generatePollinationsVariants(prompt, style = 'photorealistic', width = 1024, height = 1024, count = 4) {
-  return Array.from({ length: count }, () => generatePollinationsUrl(prompt, style, width, height))
+export function generatePollinationsVariants(prompt, style = 'photorealistic', width = 1024, height = 1024, count = 4, model = 'flux') {
+  return Array.from({ length: count }, () => generatePollinationsUrl(prompt, style, width, height, model))
 }
 
 // Pre-carga la imagen y devuelve dataURL para evitar problemas CORS en canvas
@@ -78,6 +82,28 @@ export async function generateGoogle(prompt, apiKey) {
   const b64 = data.predictions?.[0]?.bytesBase64Encoded
   if (!b64) throw new Error('No image returned')
   return `data:image/png;base64,${b64}`
+}
+
+// ─── Midjourney (via useapi.net proxy) ──────────────────────────────────────
+export async function generateMidjourney(prompt, apiKey) {
+  const res = await fetch('https://api.useapi.net/v2/jobs/imagine', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ prompt, replyUrl: '', replyRef: '' }),
+  })
+  if (!res.ok) throw new Error(`Midjourney proxy: ${res.status}`)
+  const job = await res.json()
+  return job.jobid
+}
+
+export async function pollMidjourney(jobId, apiKey) {
+  const res = await fetch(`https://api.useapi.net/v2/jobs/?jobid=${jobId}`, {
+    headers: { Authorization: `Bearer ${apiKey}` },
+  })
+  if (!res.ok) throw new Error(`Midjourney poll: ${res.status}`)
+  const data = await res.json()
+  if (data.status === 'completed') return data.attachments?.[0]?.url
+  return null
 }
 
 // ─── Unsplash ───────────────────────────────────────────────────────────────
