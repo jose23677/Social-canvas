@@ -238,18 +238,28 @@ export async function generateCarouselFromPrompt({
   const userMessage = buildUserPrompt(topic, extraInfo, tone, brand)
 
   let aiData
-  if (aiProvider === 'claude' && apiKey) {
-    aiData = await callClaude(userMessage, apiKey)
-  } else if (aiProvider === 'openai' && apiKey) {
-    aiData = await callOpenAI(userMessage, apiKey)
-  } else if (aiProvider === 'groq' && apiKey) {
-    aiData = await callGroq(userMessage, apiKey)
-  } else {
-    aiData = await callPollinations(userMessage)
+  try {
+    if (aiProvider === 'claude' && apiKey) {
+      aiData = await callClaude(userMessage, apiKey)
+    } else if (aiProvider === 'openai' && apiKey) {
+      aiData = await callOpenAI(userMessage, apiKey)
+    } else if (aiProvider === 'groq' && apiKey) {
+      aiData = await callGroq(userMessage, apiKey)
+    } else {
+      aiData = await callPollinations(userMessage)
+    }
+  } catch (err) {
+    throw new Error(`Error generando con ${aiProvider}: ${err.message}`)
   }
 
+  if (!aiData || !Array.isArray(aiData.slides) || aiData.slides.length === 0) {
+    throw new Error('La IA no devolvió slides válidos. Intenta de nuevo o usa otro proveedor.')
+  }
+
+  const slides = normalizeAISlides(aiData)
+
   return {
-    slides: normalizeAISlides(aiData),
+    slides,
     meta: {
       topic: aiData.topic || topic,
       hook: aiData.hook || '',

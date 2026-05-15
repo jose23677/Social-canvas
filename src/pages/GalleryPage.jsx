@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { LayoutGrid, Trash2, ExternalLink, Copy } from 'lucide-react'
+import { LayoutGrid, Trash2, ExternalLink } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { getProjects, deleteProject } from '../lib/supabase'
 import { Button, Card, Badge } from '../components/UI'
 import { FORMATS } from '../lib/formats'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 
 const LOCAL_KEY = 'sc_local_projects'
@@ -80,7 +80,7 @@ export default function GalleryPage() {
 
       {!user && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4 text-sm text-blue-700 dark:text-blue-300">
-          💡 <a href="/auth" className="underline font-medium">Inicia sesión</a> para sincronizar tus proyectos en la nube.
+          💡 <Link to="/auth" className="underline font-medium">Inicia sesión</Link> para sincronizar tus proyectos en la nube.
         </div>
       )}
 

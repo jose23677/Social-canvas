@@ -736,10 +736,14 @@ function CopySheet({ slides, brand, palette, meta }) {
           {/* Caption */}
           <div className="p-5 rounded-2xl border" style={{ borderColor: pal.accent + '40', background: `linear-gradient(135deg, ${pal.bg}, ${pal.bg2})` }}>
             <p className="text-[10px] font-medium uppercase tracking-widest mb-3" style={{ color: pal.accent }}>Caption para Instagram</p>
-            <p className="text-sm whitespace-pre-line leading-relaxed" style={{ color: palette.isDark ? pal.text : '#2A2520' }}>
+            <p id="studio-caption" className="text-sm whitespace-pre-line leading-relaxed" style={{ color: palette.isDark ? pal.text : '#2A2520' }}>
               {meta?.caption || `¿Tienes dudas sobre este tema? 👇\n\nGuarda este carrusel y compártelo con alguien que lo necesite.\n\nAgenda tu valoración personalizada.\n👉 ${brand.handle || '@drcolmenarez'}\n\n${(meta?.hashtags || ['#MedicinaEstética', '#SkincarePremium', '#TratamientoFacial']).map(h => h.startsWith('#') ? h : '#' + h).join(' ')}`}
             </p>
-            <button onClick={() => { navigator.clipboard.writeText(meta?.caption || ''); toast.success('Caption copiado ✓') }}
+            <button onClick={() => {
+              const captionText = meta?.caption || document.getElementById('studio-caption')?.innerText || ''
+              navigator.clipboard.writeText(captionText)
+              toast.success('Caption copiado ✓')
+            }}
               className="mt-3 text-xs hover:underline" style={{ color: pal.accent }}>
               Copiar caption →
             </button>

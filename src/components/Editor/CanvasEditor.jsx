@@ -45,8 +45,8 @@ export default function CanvasEditor() {
       canvas.loadFromJSON(savedJson, () => canvas.renderAll())
     }
 
-    canvas.on('selection:created', (e) => setSelected(e.selected[0]))
-    canvas.on('selection:updated', (e) => setSelected(e.selected[0]))
+    canvas.on('selection:created', (e) => { if (e.selected?.length) setSelected(e.selected[0]) })
+    canvas.on('selection:updated', (e) => { if (e.selected?.length) setSelected(e.selected[0]) })
     canvas.on('selection:cleared', () => setSelected(null))
     canvas.on('object:modified', syncLayers)
     canvas.on('object:added', syncLayers)

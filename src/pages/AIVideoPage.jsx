@@ -1,8 +1,7 @@
 import { useState, useRef } from 'react'
 import { Video, Wand2, Download, Upload, X, Sparkles, ChevronDown, ChevronUp, RefreshCw, ImageIcon } from 'lucide-react'
 import { generateRunway, pollRunway, generateHiggsfield, pollHiggsfield, generatePollinationsUrl, fetchImageAsDataUrl } from '../lib/aiProviders'
-import { Button, Select, Spinner, Card } from '../components/UI'
-import { cn } from '../components/UI'
+import { Button, Select, Spinner, Card, cn } from '../components/UI'
 import toast from 'react-hot-toast'
 
 const LOCAL_KEYS = 'sc_inline_keys'
