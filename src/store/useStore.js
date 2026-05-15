@@ -46,6 +46,11 @@ export const useStore = create(
         set({ slides })
       },
 
+      // Studio slides — generated from Creative Studio, loaded into canvas
+      studioSlides: null,
+      setStudioSlides: (slides) => set({ studioSlides: slides }),
+      clearStudioSlides: () => set({ studioSlides: null }),
+
       // Service API keys (stored locally only)
       apiKeys: {},
       setApiKey: (service, key) =>
@@ -69,6 +74,7 @@ export const useStore = create(
         slides: s.slides,
         currentFormat: s.currentFormat,
         projects: s.projects,
+        // studioSlides NOT persisted — session only
       }),
     }
   )

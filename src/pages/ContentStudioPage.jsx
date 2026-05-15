@@ -60,7 +60,7 @@ const JMC_DEFAULTS = {
 
 export default function ContentStudioPage() {
   const navigate = useNavigate()
-  const { setSlides, setFormat, setCurrentSlide } = useStore()
+  const { setSlides, setFormat, setCurrentSlide, setStudioSlides } = useStore()
 
   const [step, setStep] = useState('mode')
   // mode: 'template' | 'ai'
@@ -96,6 +96,7 @@ export default function ContentStudioPage() {
   const [genProgress, setGenProgress] = useState(0)
   const [genStatus, setGenStatus] = useState('')
   const [generatedSlides, setGeneratedSlides] = useState([])
+  const [modalIdx, setModalIdx] = useState(null)
 
   const setBrandField = (k) => (e) => setBrand(s => ({ ...s, [k]: typeof e === 'string' ? e : e.target.value }))
   const activePalette = PALETTES.find(p => p.id === brand.style) || PALETTES[0]
@@ -269,10 +270,14 @@ export default function ContentStudioPage() {
   }
 
   const openInEditor = () => {
+    // Save studio slides to store so CanvasEditor can load them
+    setStudioSlides(generatedSlides)
+    // Initialize blank canvas slots (one per slide)
     setSlides(generatedSlides.map(() => null))
     setFormat('portrait')
     setCurrentSlide(0)
-    navigate('/', { state: { studioSlides: generatedSlides } })
+    toast.success('Abriendo en editor...')
+    navigate('/')
   }
 
   const bgClass = cn('min-h-screen', activePalette.isDark && step !== 'mode' ? 'bg-[#050B14]' : 'bg-gradient-to-b from-[#F7F3EE] to-white dark:from-slate-900 dark:to-slate-800')
@@ -858,7 +863,7 @@ export default function ContentStudioPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {generatedSlides.map((slide, i) => (
-                <SlidePreviewCard key={i} slide={slide} index={i} palette={activePalette} />
+                <SlidePreviewCard key={i} slide={slide} index={i} palette={activePalette} onOpen={setModalIdx} />
               ))}
             </div>
 
@@ -866,19 +871,32 @@ export default function ContentStudioPage() {
           </div>
         )}
       </div>
+
+      {/* Slide modal */}
+      {modalIdx !== null && generatedSlides.length > 0 && (
+        <SlideModal
+          slides={generatedSlides}
+          initialIndex={modalIdx}
+          palette={activePalette}
+          onClose={() => setModalIdx(null)}
+        />
+      )}
     </div>
   )
 }
 
 // ── Slide Preview Card ────────────────────────────────────────────────────────
-function SlidePreviewCard({ slide, index, palette }) {
+function SlidePreviewCard({ slide, index, palette, onOpen }) {
   const pal = slide.palette || palette.colors
   const el = slide.elements || {}
   const isDark = slide.isDark ?? palette.isDark
 
   return (
-    <div className="group relative rounded-xl overflow-hidden border hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1"
-      style={{ background: slide.bgColor || pal.bg, aspectRatio: '4/5', borderColor: pal.accent + '30' }}>
+    <div
+      className="group relative rounded-xl overflow-hidden border hover:shadow-xl transition-all cursor-pointer hover:-translate-y-1"
+      style={{ background: slide.bgColor || pal.bg, aspectRatio: '4/5', borderColor: pal.accent + '30' }}
+      onClick={() => onOpen(index)}
+    >
       <img src={slide.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover"
         style={{ opacity: isDark ? 0.25 : 0.40 }} loading="lazy" onError={(e) => { e.target.style.opacity = 0 }} />
       <div className="absolute inset-0" style={{ background: isDark ? `linear-gradient(to bottom, ${pal.bg}CC, ${pal.bg}F0)` : `linear-gradient(to bottom, ${pal.bg}99, ${pal.bg}F0 55%)` }} />
@@ -900,8 +918,123 @@ function SlidePreviewCard({ slide, index, palette }) {
           {palette.logo && index === 9 && <img src={palette.logo} alt="" className="h-5 w-5 object-contain opacity-80 rounded" />}
         </div>
       </div>
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.45)' }}>
-        <span className="text-white text-xs font-medium px-3 py-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)' }}>Ver slide</span>
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2" style={{ background: 'rgba(0,0,0,0.5)' }}>
+        <span className="text-white text-xs font-medium px-3 py-1.5 rounded-full flex items-center gap-1.5" style={{ background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)' }}>
+          <Wand2 className="w-3.5 h-3.5" /> Ver slide
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ── Slide Full Modal ──────────────────────────────────────────────────────────
+function SlideModal({ slides, initialIndex, palette, onClose }) {
+  const [idx, setIdx] = useState(initialIndex)
+  const slide = slides[idx]
+  const pal = slide?.palette || palette.colors
+  const el = slide?.elements || {}
+  const isDark = slide?.isDark ?? palette.isDark
+  const total = slides.length
+
+  if (!slide) return null
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md" onClick={onClose}>
+      <div className="relative w-full max-w-sm" onClick={e => e.stopPropagation()}>
+        {/* Nav arrows */}
+        <button disabled={idx === 0} onClick={() => setIdx(i => i - 1)}
+          className="absolute -left-12 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center disabled:opacity-30 transition-all">
+          ‹
+        </button>
+        <button disabled={idx === total - 1} onClick={() => setIdx(i => i + 1)}
+          className="absolute -right-12 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/20 hover:bg-white/40 text-white flex items-center justify-center disabled:opacity-30 transition-all">
+          ›
+        </button>
+
+        {/* Slide */}
+        <div className="rounded-2xl overflow-hidden shadow-2xl" style={{ background: slide.bgColor || pal.bg, aspectRatio: '4/5', position: 'relative' }}>
+          {/* Background image */}
+          {slide.imageUrl && (
+            <img src={slide.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover"
+              style={{ opacity: isDark ? 0.3 : 0.45 }}
+              onError={(e) => { e.target.style.opacity = 0 }} />
+          )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0" style={{ background: isDark ? `linear-gradient(160deg, ${pal.bg}AA 0%, ${pal.bg}F5 100%)` : `linear-gradient(160deg, ${pal.bg}88 0%, ${pal.bg}F0 65%)` }} />
+
+          {/* Content */}
+          <div className="relative h-full flex flex-col p-7">
+            {/* Label */}
+            {el.label && (
+              <span className="text-[10px] uppercase tracking-[0.2em] font-medium px-2.5 py-1 rounded-full self-start mb-2"
+                style={{ color: pal.accent, background: pal.accent + '20', border: `0.5px solid ${pal.accent}40` }}>
+                {typeof el.label === 'string' ? el.label : `Slide ${idx + 1}`}
+              </span>
+            )}
+            <div className="w-10 h-0.5 mb-4 mt-1" style={{ background: pal.accent }} />
+
+            {/* Headline */}
+            <div className="mb-3">
+              {(Array.isArray(el.headline) ? el.headline : [el.headline]).filter(Boolean).map((line, j) => (
+                <p key={j} style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '28px', color: isDark ? pal.white || '#F5F0E8' : pal.text, lineHeight: 1.15, fontWeight: 600 }}>{line}</p>
+              ))}
+            </div>
+
+            {/* Accent */}
+            {el.accent && typeof el.accent === 'string' && (
+              <p className="text-sm italic mb-3" style={{ color: pal.accent, fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{el.accent.slice(0, 80)}</p>
+            )}
+
+            {/* Body */}
+            {el.body && typeof el.body === 'string' && (
+              <p className="text-xs leading-relaxed mb-3" style={{ color: isDark ? pal.text + 'DD' : pal.text + 'CC', fontWeight: 300 }}>
+                {el.body.slice(0, 200)}{el.body.length > 200 ? '…' : ''}
+              </p>
+            )}
+
+            {/* Bullets */}
+            {Array.isArray(el.bullets) && el.bullets.length > 0 && (
+              <ul className="space-y-1.5 mb-3">
+                {el.bullets.slice(0, 4).map((b, i) => (
+                  <li key={i} className="text-xs flex gap-2" style={{ color: isDark ? pal.text + 'DD' : pal.text + 'CC', fontWeight: 300 }}>
+                    <span style={{ color: pal.accent }}>·</span>{b.slice(0, 60)}
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {/* Quote */}
+            {el.quote && typeof el.quote === 'string' && (
+              <p className="text-sm italic mt-auto" style={{ color: pal.accent, fontFamily: 'Cormorant Garamond, serif' }}>
+                "{el.quote.slice(0, 100)}"
+              </p>
+            )}
+
+            {/* Bottom */}
+            <div className="mt-auto flex items-center gap-3 pt-3 border-t" style={{ borderColor: pal.accent + '25' }}>
+              <div className="w-8 h-0.5" style={{ background: pal.accent }} />
+              {(el.handle || el.ctaInstagram) && (
+                <span className="text-[10px] uppercase tracking-widest" style={{ color: pal.accent }}>
+                  {(el.handle || el.ctaInstagram || '').slice(0, 20)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Slide counter + close */}
+        <div className="flex items-center justify-between mt-3 px-1">
+          <div className="flex gap-1">
+            {slides.map((_, i) => (
+              <button key={i} onClick={() => setIdx(i)}
+                className="w-1.5 h-1.5 rounded-full transition-all"
+                style={{ background: i === idx ? pal.accent : 'rgba(255,255,255,0.4)', transform: i === idx ? 'scale(1.4)' : 'scale(1)' }} />
+            ))}
+          </div>
+          <button onClick={onClose} className="text-white/70 hover:text-white text-xs transition-colors">
+            Cerrar ✕
+          </button>
+        </div>
       </div>
     </div>
   )
