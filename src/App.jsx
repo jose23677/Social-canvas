@@ -10,6 +10,7 @@ import SettingsPage from './pages/SettingsPage'
 import ApiKeysPage from './pages/ApiKeysPage'
 import GalleryPage from './pages/GalleryPage'
 import AIVideoPage from './pages/AIVideoPage'
+import ContentStudioPage from './pages/ContentStudioPage'
 import './i18n'
 
 export default function App() {
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/ai-video" element={<AIVideoPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/apikeys" element={<ApiKeysPage />} />
+          <Route path="/studio" element={<ContentStudioPage />} />
         </Routes>
       </main>
       <Toaster

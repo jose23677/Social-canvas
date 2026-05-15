@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Globe, LogOut, User, Layers, Image, Settings, Key, LayoutGrid } from 'lucide-react'
+import { Moon, Sun, Globe, LogOut, User, Layers, Image, Settings, Key, LayoutGrid, Sparkles } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { signOut } from '../../lib/supabase'
 import { cn } from '../UI'
@@ -13,6 +13,7 @@ export default function Header() {
   const { darkMode, toggleDarkMode, user, setUser, language, setLanguage } = useStore()
 
   const navItems = [
+    { path: '/studio', label: 'Creative Studio', icon: Sparkles, highlight: true },
     { path: '/', label: t('nav.editor'), icon: Layers },
     { path: '/gallery', label: t('nav.gallery'), icon: LayoutGrid },
     { path: '/ai-video', label: 'Reels IA', icon: Image },
@@ -48,15 +49,19 @@ export default function Header() {
 
         {/* Nav */}
         <nav className="flex items-center gap-1 flex-1 overflow-x-auto scrollbar-none">
-          {navItems.map(({ path, label, icon: Icon }) => (
+          {navItems.map(({ path, label, icon: Icon, highlight }) => (
             <Link
               key={path}
               to={path}
               className={cn(
                 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors',
                 location.pathname === path
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
+                  ? highlight
+                    ? 'bg-[#C4A882]/20 text-[#8C6B4A] dark:text-[#C4A882]'
+                    : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                  : highlight
+                    ? 'text-[#C4A882] hover:bg-[#C4A882]/10 border border-[#C4A882]/30'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200'
               )}
             >
               <Icon className="w-4 h-4" />

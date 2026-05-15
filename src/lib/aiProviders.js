@@ -1,3 +1,35 @@
+// ─── Pollinations AI — GRATIS, sin API key ─────────────────────────────────
+const STYLE_SUFFIX = {
+  photorealistic: 'photorealistic, ultra detailed, 8k, sharp focus',
+  artistic: 'digital art, vibrant colors, artistic, creative',
+  cinematic: 'cinematic photography, dramatic lighting, film grain',
+  illustration: 'clean illustration, vector style, graphic design',
+  instagram: 'instagram aesthetic, lifestyle, warm tones, professional',
+}
+
+export function generatePollinationsUrl(prompt, style = 'photorealistic', width = 1024, height = 1024) {
+  const seed = Math.floor(Math.random() * 999999)
+  const full = `${prompt}, ${STYLE_SUFFIX[style] || STYLE_SUFFIX.photorealistic}`
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(full)}?width=${width}&height=${height}&seed=${seed}&nologo=true&enhance=true`
+}
+
+export function generatePollinationsVariants(prompt, style = 'photorealistic', width = 1024, height = 1024, count = 4) {
+  return Array.from({ length: count }, () => generatePollinationsUrl(prompt, style, width, height))
+}
+
+// Pre-carga la imagen y devuelve dataURL para evitar problemas CORS en canvas
+export async function fetchImageAsDataUrl(url) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`Error cargando imagen: ${res.status}`)
+  const blob = await res.blob()
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result)
+    reader.onerror = reject
+    reader.readAsDataURL(blob)
+  })
+}
+
 // ─── Stability AI ──────────────────────────────────────────────────────────
 export async function generateStability(prompt, style, apiKey) {
   const styleMap = {
@@ -28,7 +60,7 @@ export async function generateStability(prompt, style, apiKey) {
   return `data:image/png;base64,${data.artifacts[0].base64}`
 }
 
-// ─── Google Imagen (Generative AI) ─────────────────────────────────────────
+// ─── Google Imagen ──────────────────────────────────────────────────────────
 export async function generateGoogle(prompt, apiKey) {
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-001:predict?key=${apiKey}`,
@@ -60,33 +92,7 @@ export async function searchUnsplash(prompt, apiKey) {
     url: p.urls.regular,
     thumb: p.urls.small,
     credit: p.user.name,
-    link: p.links.html,
   }))
-}
-
-// ─── Midjourney (via unofficial proxy) ─────────────────────────────────────
-export async function generateMidjourney(prompt, apiKey) {
-  const res = await fetch('https://api.useapi.net/v2/jobs/imagine', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({ prompt, replyUrl: '', replyRef: '' }),
-  })
-  if (!res.ok) throw new Error(`Midjourney proxy: ${res.status}`)
-  const job = await res.json()
-  return job.jobid
-}
-
-export async function pollMidjourney(jobId, apiKey) {
-  const res = await fetch(`https://api.useapi.net/v2/jobs/?jobid=${jobId}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  })
-  if (!res.ok) throw new Error(`Midjourney poll: ${res.status}`)
-  const data = await res.json()
-  if (data.status === 'completed') return data.attachments?.[0]?.url
-  return null
 }
 
 // ─── RunwayML ───────────────────────────────────────────────────────────────
