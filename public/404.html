@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>SocialCanvas</title>
+  <script>
+    // SPA redirect for GitHub Pages: store path and redirect to root
+    var l = window.location;
+    l.replace(
+      l.protocol + '//' + l.host + l.pathname.split('/').slice(0, 2).join('/') +
+      '/?p=' + encodeURIComponent(l.pathname.slice(1) + l.search) + '#' + l.hash.slice(1)
+    );
+  </script>
+</head>
+<body></body>
+</html>
