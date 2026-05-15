@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation } from 'react-router-dom'
-import { Moon, Sun, Globe, LogOut, User, Layers, Image, Settings, Key, LayoutGrid, Sparkles } from 'lucide-react'
+import { Moon, Sun, Globe, LogOut, User, Layers, Image, Settings, Key, LayoutGrid, Sparkles, Grid } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { signOut } from '../../lib/supabase'
 import { cn } from '../UI'
@@ -14,6 +14,7 @@ export default function Header() {
 
   const navItems = [
     { path: '/studio', label: 'Creative Studio', icon: Sparkles, highlight: true },
+    { path: '/grid', label: 'Grid Maker', icon: Grid },
     { path: '/', label: t('nav.editor'), icon: Layers },
     { path: '/gallery', label: t('nav.gallery'), icon: LayoutGrid },
     { path: '/ai-video', label: 'Reels IA', icon: Image },

@@ -173,8 +173,7 @@ export default function ContentStudioPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: step === 'preview' ? '#F7F3EE' : undefined }}
-      className={cn('min-h-screen', activePalette.isDark && step !== 'template' ? 'bg-[#050B14]' : 'bg-gradient-to-b from-[#F7F3EE] to-white dark:from-slate-900 dark:to-slate-800')}>
+    <div className={cn('min-h-screen', activePalette.isDark && step !== 'template' ? 'bg-[#050B14]' : 'bg-gradient-to-b from-[#F7F3EE] to-white dark:from-slate-900 dark:to-slate-800')}>
 
       {/* ── Hero ── */}
       <div className={cn(
