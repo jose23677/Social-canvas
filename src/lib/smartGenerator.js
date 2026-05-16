@@ -20,6 +20,45 @@ function capitalize(str) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+// Extrae el tema real del prompt — elimina frases de introducción comunes
+function extractRealTopic(rawTopic) {
+  if (!rawTopic) return ''
+
+  let t = rawTopic.trim()
+
+  // Elimina frases introductorias comunes (español e inglés)
+  const PREAMBLES = [
+    /^quiero\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^crea\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^genera\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^hazme\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^necesito\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^diseña\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^haz\s+un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^un?\s+carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^carrusel\s+(sobre|de|acerca\s+de|para|del?)\s*/i,
+    /^create\s+a\s+carousel\s+(about|on|for|of)\s*/i,
+    /^make\s+a\s+carousel\s+(about|on|for|of)\s*/i,
+    /^generate\s+a\s+carousel\s+(about|on|for|of)\s*/i,
+    /^carousel\s+(about|on|for|of)\s*/i,
+    /^quiero\s+información\s+(sobre|de|acerca\s+de)\s*/i,
+    /^información\s+(sobre|de|acerca\s+de)\s*/i,
+    /^habla\s+(sobre|de|acerca\s+de)\s*/i,
+  ]
+
+  for (const re of PREAMBLES) {
+    if (re.test(t)) {
+      t = t.replace(re, '').trim()
+      break
+    }
+  }
+
+  // Elimina puntuación al inicio
+  t = t.replace(/^[.,;:\-–—"'«»]+\s*/, '').trim()
+
+  return t || rawTopic.trim()
+}
+
 function detectCategory(topic) {
   const t = topic.toLowerCase()
   if (/rellen|filler|hialurónico|dermal/i.test(t)) return 'filler'
@@ -34,8 +73,11 @@ function detectCategory(topic) {
 }
 
 function getTopicShort(topic) {
-  // Extract main subject (first 3-4 words)
-  return topic.split(/[\s,;.]+/).slice(0, 4).join(' ')
+  // Take first 3-4 meaningful words (already cleaned of preambles)
+  const words = topic.split(/[\s,;.]+/).filter(w => w.length > 0)
+  // If topic is short enough, use it whole
+  if (words.length <= 5) return topic.trim()
+  return words.slice(0, 4).join(' ')
 }
 
 const CATEGORY_DATA = {
@@ -99,9 +141,11 @@ const CATEGORY_DATA = {
 const CAT = (cat) => ({ ...CATEGORY_DATA.general, ...(CATEGORY_DATA[cat] || {}) })
 
 export function generateSmartCarousel({ topic, brand, tone }) {
-  const cat = detectCategory(topic)
+  // Clean preambles ("quiero un carrusel sobre X" → "X")
+  const cleanedTopic = extractRealTopic(topic)
+  const cat = detectCategory(cleanedTopic)
   const data = CAT(cat)
-  const topicShort = getTopicShort(topic)
+  const topicShort = getTopicShort(cleanedTopic)
   const doctor = brand?.doctor || 'Dr. Nombre'
   const handle = brand?.handle || '@tuclínica'
   const whatsapp = brand?.whatsapp || ''
