@@ -1,220 +1,436 @@
+import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Sparkles, ArrowRight, Layers, Grid3x3, Video, Image, Zap, Star, CheckCircle } from 'lucide-react'
+import { motion, useScroll, useTransform, useInView } from 'framer-motion'
+import {
+  Sparkles, ArrowRight, Zap, Layers, Image, LayoutGrid,
+  Video, Star, Check, ChevronRight, Wand2, Palette, Globe,
+} from 'lucide-react'
 
-const SLIDES_DEMO = [
-  { label: 'MEDICINA ESTÉTICA', title: ['Tu mejor versión', 'comienza aquí'], accent: 'Tratamientos de precisión', bg: '#0C1A28', img: 'https://image.pollinations.ai/prompt/elegant%20woman%20glowing%20skin%20champagne%20light%20editorial%20luxury?model=flux&width=400&height=500&seed=42&nologo=true' },
-  { label: '01 / BENEFICIOS', title: ['6 razones para', 'elegirlo'], accent: 'Ciencia y precisión', bg: '#1A0C28', img: 'https://image.pollinations.ai/prompt/luxury%20medical%20clinic%20golden%20light%20premium%20minimal?model=flux&width=400&height=500&seed=43&nologo=true' },
-  { label: '02 / RESULTADOS', title: ['Resultados', 'en 14 días'], accent: 'Timeline exacto', bg: '#0C2818', img: 'https://image.pollinations.ai/prompt/beautiful%20woman%20natural%20radiant%20skin%20champagne%20editorial?model=flux&width=400&height=500&seed=44&nologo=true' },
+// ── Animation variants ────────────────────────────────────────────────────────
+const fadeUp = { hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } } }
+const fadeIn  = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.5 } } }
+const stagger = { show: { transition: { staggerChildren: 0.1 } } }
+const staggerFast = { show: { transition: { staggerChildren: 0.07 } } }
+const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, show: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } } }
+
+function Section({ children, className = '' }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
+  return (
+    <motion.div ref={ref} variants={stagger} initial="hidden" animate={inView ? 'show' : 'hidden'} className={className}>
+      {children}
+    </motion.div>
+  )
+}
+
+// ── Mock carousel slides ──────────────────────────────────────────────────────
+const MOCK_SLIDES = [
+  {
+    bg: 'linear-gradient(145deg, #0c1428 0%, #111827 100%)',
+    accent: '#818cf8',
+    label: 'MEDICINA ESTÉTICA',
+    title: ['Resultados', 'que inspiran'],
+    sub: 'Tratamientos de precisión',
+    img: 'https://image.pollinations.ai/prompt/elegant%20woman%20glowing%20skin%20luxury%20editorial%20champagne?model=flux&width=300&height=380&seed=101&nologo=true',
+  },
+  {
+    bg: 'linear-gradient(145deg, #0d1117 0%, #1a0a2e 100%)',
+    accent: '#c084fc',
+    label: 'SKINCARE PREMIUM',
+    title: ['Tu piel,', 'transformada'],
+    sub: 'Rutina de alto rendimiento',
+    img: 'https://image.pollinations.ai/prompt/luxury%20skincare%20products%20minimal%20studio%20premium%20editorial?model=flux&width=300&height=380&seed=102&nologo=true',
+  },
+  {
+    bg: 'linear-gradient(145deg, #0a1a0a 0%, #0f2010 100%)',
+    accent: '#34d399',
+    label: 'WELLNESS & VIDA',
+    title: ['Bienestar', 'sin límites'],
+    sub: 'Contenido que convierte',
+    img: 'https://image.pollinations.ai/prompt/woman%20wellness%20lifestyle%20natural%20light%20editorial%20premium?model=flux&width=300&height=380&seed=103&nologo=true',
+  },
 ]
 
 const FEATURES = [
-  { icon: Sparkles, title: 'IA que diseña sola', desc: 'Escribe un prompt. La IA crea slides, copies, hooks y CTA de forma automática con calidad de agencia.' },
-  { icon: Image, title: 'Imágenes hiperrealistas', desc: 'Genera imágenes cinematográficas con Flux AI. Calidad editorial, nivel campaña internacional.' },
-  { icon: Grid3x3, title: 'Feed simulator', desc: 'Previsualiza cómo se verá tu feed de Instagram. Arrastra, reordena y exporta listo para publicar.' },
-  { icon: Layers, title: 'Editor visual', desc: 'Edita cada slide con el canvas. Texto, colores, imágenes, capas. Control total sobre el diseño.' },
-  { icon: Video, title: 'AI Reels', desc: 'Genera storyboards y guiones virales para tus Reels. De un prompt a un concepto completo.' },
-  { icon: Zap, title: 'Instantáneo', desc: 'Sin API keys, sin registro de terceros. Genera tu primer carrusel en menos de 30 segundos.' },
+  { icon: Wand2, label: 'AI Carousel Generator', desc: 'Genera 10 slides premium desde un prompt. Copy, diseño e imágenes en segundos.' },
+  { icon: Image, label: 'AI Image Engine', desc: 'Imágenes hiperrealistas con Flux AI. Calidad editorial de campaña internacional.' },
+  { icon: Zap, label: 'Viral Hook Generator', desc: 'La IA crea ganchos que detienen el scroll y disparan el engagement.' },
+  { icon: Layers, label: 'Canvas Editor', desc: 'Editor visual profesional. Edita, arrastra y personaliza cada slide.' },
+  { icon: Palette, label: 'Brand Memory AI', desc: 'La IA aprende tu identidad de marca y la aplica automáticamente.' },
+  { icon: LayoutGrid, label: 'Feed Simulator', desc: 'Previsualiza tu feed antes de publicar. Arrastra y reordena posts.' },
+  { icon: Video, label: 'AI Reels Studio', desc: 'Genera guiones, storyboards y conceptos visuales para tus Reels.' },
+  { icon: Globe, label: 'Multi-format Export', desc: 'Exporta en PNG, JPG y PDF en alta resolución. Listo para publicar.' },
+  { icon: Star, label: 'Premium Templates', desc: 'Biblioteca de plantillas editoriales diseñadas por directores creativos.' },
 ]
 
-const NICHES = ['Medicina Estética', 'Skincare', 'Fitness', 'Real Estate', 'Moda', 'Branding Personal', 'Nutrición', 'Coaching']
+const STEPS = [
+  { n: '01', title: 'Escribe tu prompt', desc: 'Describe el contenido que quieres. Tema, tono, audiencia. La IA entiende lenguaje natural.' },
+  { n: '02', title: 'La IA diseña todo', desc: '10 slides completos: texto, imágenes premium, hooks virales y CTAs optimizados.' },
+  { n: '03', title: 'Edita y exporta', desc: 'Ajusta lo que necesites en el editor visual y exporta en alta resolución.' },
+]
 
+const TESTIMONIALS = [
+  { name: 'Valentina R.', role: 'Médico Estética · @valentinarest', avatar: 'VR', text: 'En 2 minutos tengo un carrusel que antes me tomaba 3 horas con un diseñador. La calidad es brutal.', stars: 5 },
+  { name: 'Carlos M.', role: 'Branding Agency · @cmbrand', avatar: 'CM', text: 'Mis clientes quedan impresionados. El nivel editorial es de agencia internacional. Lo uso todos los días.', stars: 5 },
+  { name: 'Ana Sofía G.', role: 'Skincare Brand · @anasofiabeauty', avatar: 'AS', text: 'Pasé de publicar 2 veces por semana a 6. El contenido se ve premium y el engagement se triplicó.', stars: 5 },
+]
+
+const NICHES = ['Medicina Estética', 'Skincare', 'Fitness', 'Real Estate', 'Moda', 'Nutrición', 'Coaching', 'Arquitectura', 'Gastronomía', 'Tecnología']
+
+// ── Component ─────────────────────────────────────────────────────────────────
 export default function LandingPage() {
   const navigate = useNavigate()
+  const { scrollY } = useScroll()
+  const heroY = useTransform(scrollY, [0, 500], [0, -80])
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0])
 
   return (
-    <div style={{ background: 'var(--bg)', color: 'var(--text)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--bg)', color: 'var(--text)', overflowX: 'hidden' }}>
 
       {/* ── Nav ── */}
-      <nav style={{ position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--border)', backdropFilter: 'blur(20px)', background: 'rgba(9,9,11,0.8)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <motion.nav
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, borderBottom: '1px solid var(--border)', backdropFilter: 'blur(20px)', background: 'rgba(3,3,3,0.85)' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={16} color="white" />
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}>
+              <Sparkles size={16} color="white" strokeWidth={2.5} />
             </div>
-            <span style={{ fontWeight: 700, fontSize: 16 }}>Social<span style={{ color: 'var(--accent)' }}>Canvas</span></span>
+            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: '-0.02em' }}>
+              Social<span style={{ color: 'var(--indigo-h)' }}>Canvas</span>
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            {['Características', 'Plantillas', 'Precios'].map(item => (
+              <button key={item} className="btn-ghost" style={{ padding: '6px 14px', fontSize: 13, fontWeight: 500 }}>
+                {item}
+              </button>
+            ))}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => navigate('/gallery')}>Galería</button>
-            <button className="btn-primary" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => navigate('/studio')}>
-              Crear ahora <ArrowRight size={14} />
+            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => navigate('/auth')}>
+              Entrar
+            </button>
+            <button className="btn-primary" style={{ padding: '8px 18px', fontSize: 13 }} onClick={() => navigate('/studio')}>
+              Crear gratis <ArrowRight size={14} />
             </button>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* ── Hero ── */}
-      <section className="grid-bg" style={{ padding: '100px 24px 80px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        {/* Glow orbs */}
-        <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: 600, height: 300, background: 'radial-gradient(ellipse, rgba(99,102,241,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', top: '40%', left: '20%', width: 300, height: 300, background: 'radial-gradient(ellipse, rgba(196,168,130,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 28px 80px', position: 'relative', overflow: 'hidden' }}>
 
-        <div style={{ maxWidth: 800, margin: '0 auto', position: 'relative' }}>
+        {/* Background */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          {/* Grid */}
+          <div className="line-grid" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
+          {/* Glow orbs */}
+          <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', top: '30%', left: '15%', width: 400, height: 400, background: 'radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', top: '20%', right: '10%', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(196,168,130,0.05) 0%, transparent 70%)', borderRadius: '50%' }} />
+          {/* Fade to black at bottom */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(to bottom, transparent, var(--bg))' }} />
+        </div>
+
+        <motion.div style={{ y: heroY, opacity: heroOpacity, maxWidth: 900, width: '100%', textAlign: 'center', position: 'relative' }}>
+
           {/* Badge */}
-          <div className="animate-fade-up" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '6px 14px', background: 'var(--accent-glow)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: 99, marginBottom: 32 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: 'pulse-slow 2s infinite' }} />
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-h)', letterSpacing: '0.05em' }}>IA GENERATIVA · CONTENIDO PREMIUM</span>
-          </div>
+          <motion.div variants={fadeUp} initial="hidden" animate="show" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 32 }}>
+            <div className="badge" style={{ padding: '6px 16px', fontSize: 11 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', boxShadow: '0 0 8px #818cf8', animation: 'glow-pulse 2s infinite' }} />
+              IA GENERATIVA · CONTENIDO PREMIUM
+            </div>
+          </motion.div>
 
           {/* Headline */}
-          <h1 className="animate-fade-up delay-100" style={{ fontSize: 'clamp(40px, 6vw, 72px)', fontWeight: 800, lineHeight: 1.05, marginBottom: 24, letterSpacing: '-0.03em', fontFamily: 'Inter, system-ui, sans-serif' }}>
-            Crea carruseles<br />
-            <span className="grad-accent">virales con IA</span><br />
-            en segundos
-          </h1>
+          <motion.h1
+            variants={fadeUp} initial="hidden" animate="show"
+            transition={{ delay: 0.1 }}
+            className="h-display"
+            style={{ marginBottom: 24 }}>
+            <span className="text-gradient">Crea contenido viral</span><br />
+            <span className="text-gradient-indigo">con IA en segundos</span>
+          </motion.h1>
 
-          <p className="animate-fade-up delay-200" style={{ fontSize: 18, color: 'var(--text-2)', maxWidth: 560, margin: '0 auto 40px', lineHeight: 1.7 }}>
-            Genera carruseles, imágenes y contenido editorial de calidad de agencia creativa.
-            Sin diseñador. Sin agencia. Solo un prompt.
-          </p>
+          <motion.p
+            variants={fadeUp} initial="hidden" animate="show"
+            transition={{ delay: 0.2 }}
+            style={{ fontSize: 18, color: 'var(--text-2)', maxWidth: 580, margin: '0 auto 44px', lineHeight: 1.75, fontWeight: 400 }}>
+            Genera carruseles premium, imágenes cinematográficas y contenido editorial de calidad de agencia. Solo necesitas un prompt.
+          </motion.p>
 
-          {/* CTA buttons */}
-          <div className="animate-fade-up delay-300" style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn-primary" style={{ padding: '13px 28px', fontSize: 15, borderRadius: 12 }} onClick={() => navigate('/studio')}>
-              <Sparkles size={18} /> Crear mi carrusel gratis
+          {/* CTAs */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="show"
+            transition={{ delay: 0.3 }}
+            style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}>
+            <button className="btn-hero btn" onClick={() => navigate('/studio')}>
+              <Sparkles size={18} strokeWidth={2.5} />
+              Crear mi carrusel gratis
             </button>
-            <button className="btn-ghost" style={{ padding: '13px 28px', fontSize: 15, borderRadius: 12 }} onClick={() => navigate('/studio?tab=templates')}>
-              Ver plantillas <ArrowRight size={16} />
+            <button className="btn-ghost-lg btn" onClick={() => navigate('/studio?tab=templates')}>
+              Ver plantillas <ChevronRight size={16} />
             </button>
-          </div>
+          </motion.div>
 
-          {/* Social proof */}
-          <div className="animate-fade-up delay-400" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 20, marginTop: 40, color: 'var(--text-3)', fontSize: 13 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} style={{ color: 'var(--accent)' }} /> Sin API key</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} style={{ color: 'var(--accent)' }} /> Gratis para empezar</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle size={14} style={{ color: 'var(--accent)' }} /> Listo en 30 segundos</span>
-          </div>
-        </div>
-      </section>
+          {/* Trust badges */}
+          <motion.div
+            variants={fadeUp} initial="hidden" animate="show"
+            transition={{ delay: 0.4 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, color: 'var(--text-3)', fontSize: 13 }}>
+            {['Sin API key requerida', 'Resultado en 30 segundos', 'Gratis para empezar'].map(t => (
+              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <Check size={14} style={{ color: 'var(--indigo)' }} strokeWidth={2.5} /> {t}
+              </span>
+            ))}
+          </motion.div>
+        </motion.div>
 
-      {/* ── Carousel Demo ── */}
-      <section style={{ padding: '0 24px 100px', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto' }}>
-          {/* Preview title */}
-          <p style={{ textAlign: 'center', fontSize: 12, fontWeight: 600, letterSpacing: '0.1em', color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: 32 }}>
-            Resultado real generado por la IA
-          </p>
-
-          {/* Carousel mockup */}
-          <div style={{ display: 'flex', gap: 16, justifyContent: 'center', overflowX: 'auto', paddingBottom: 16 }}>
-            {SLIDES_DEMO.map((s, i) => (
-              <div key={i} className="animate-fade-up" style={{ animationDelay: `${i * 0.1}s`, flexShrink: 0, width: 220, aspectRatio: '4/5', borderRadius: 20, overflow: 'hidden', position: 'relative', border: '1px solid var(--border)', transform: i === 1 ? 'scale(1.05)' : 'scale(0.95)', transition: 'transform 0.3s' }}>
-                <img src={s.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4 }} onError={e => { e.target.style.opacity = 0 }} />
-                <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, ${s.bg}99, ${s.bg}F5)` }} />
-                <div style={{ position: 'relative', height: '100%', padding: 20, display: 'flex', flexDirection: 'column' }}>
-                  <span style={{ fontSize: 8, fontWeight: 700, letterSpacing: '0.15em', color: 'var(--gold)', background: 'rgba(196,168,130,0.15)', padding: '3px 8px', borderRadius: 99, alignSelf: 'flex-start', border: '0.5px solid rgba(196,168,130,0.3)' }}>
-                    {s.label}
-                  </span>
-                  <div style={{ marginTop: 'auto' }}>
-                    {s.title.map((l, j) => <p key={j} style={{ fontFamily: 'Georgia, serif', fontSize: 20, fontWeight: 700, color: '#fff', lineHeight: 1.15 }}>{l}</p>)}
-                    <p style={{ fontSize: 10, color: 'var(--gold)', marginTop: 8, fontStyle: 'italic', fontFamily: 'Georgia, serif' }}>{s.accent}</p>
-                    <div style={{ width: 24, height: 1, background: 'var(--gold)', marginTop: 12 }} />
-                  </div>
+        {/* Floating carousel mockups */}
+        <div style={{ position: 'relative', marginTop: 80, width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'center', gap: 20, alignItems: 'flex-start' }}>
+          {MOCK_SLIDES.map((s, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 60 + i * 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 + i * 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                width: 220,
+                aspectRatio: '4/5',
+                borderRadius: 20,
+                overflow: 'hidden',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: 'var(--shadow-float)',
+                flexShrink: 0,
+                transform: `rotate(${(i - 1) * 3}deg)`,
+                animation: `${i % 2 === 0 ? 'float' : 'float-r'} ${5 + i * 0.5}s ease-in-out infinite`,
+                animationDelay: `${i * 0.4}s`,
+                position: 'relative',
+                zIndex: i === 1 ? 2 : 1,
+                scale: i === 1 ? 1.08 : 0.95,
+              }}>
+              <div style={{ position: 'absolute', inset: 0, background: s.bg }} />
+              <img src={s.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35, mixBlendMode: 'luminosity' }} onError={e => { e.target.style.opacity = 0 }} />
+              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, ${s.bg.includes('#0c1428') ? 'rgba(12,20,40,0.3)' : 'rgba(10,10,20,0.3)'} 0%, rgba(5,5,15,0.85) 100%)` }} />
+              <div style={{ position: 'absolute', inset: 0, padding: 20, display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.18em', color: s.accent, background: `${s.accent}15`, padding: '4px 10px', borderRadius: 99, alignSelf: 'flex-start', border: `0.5px solid ${s.accent}30` }}>
+                  {s.label}
+                </span>
+                <div style={{ marginTop: 'auto' }}>
+                  {s.title.map((l, j) => (
+                    <p key={j} style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{l}</p>
+                  ))}
+                  <p style={{ fontSize: 10, color: s.accent, marginTop: 8, opacity: 0.85 }}>{s.sub}</p>
+                  <div style={{ width: 28, height: 1.5, background: s.accent, marginTop: 12, opacity: 0.7 }} />
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Features ── */}
-      <section style={{ padding: '80px 24px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 64 }}>
-            <p className="label" style={{ marginBottom: 12 }}>Funcionalidades</p>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 16 }}>
-              Una agencia creativa<br /><span className="grad-accent">dentro de tu navegador</span>
-            </h2>
-            <p style={{ color: 'var(--text-2)', maxWidth: 480, margin: '0 auto' }}>
-              Todo lo que necesitas para crear contenido premium para Instagram, sin diseñador ni agencia.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-            {FEATURES.map((f, i) => (
-              <div key={i} className="card animate-fade-up" style={{ padding: 28, animationDelay: `${i * 0.07}s` }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--accent-glow)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                  <f.icon size={20} style={{ color: 'var(--accent)' }} />
-                </div>
-                <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>{f.title}</h3>
-                <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.65 }}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Niches ── */}
-      <section style={{ padding: '60px 24px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
-          <p className="label" style={{ marginBottom: 24 }}>Funciona para cualquier nicho</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
-            {NICHES.map((n, i) => (
-              <span key={i} className="tag" style={{ padding: '8px 18px', fontSize: 13, borderRadius: 99 }}>{n}</span>
-            ))}
-          </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 
       {/* ── How it works ── */}
-      <section style={{ padding: '80px 24px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
-            <p className="label" style={{ marginBottom: 12 }}>Cómo funciona</p>
-            <h2 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, letterSpacing: '-0.02em' }}>
-              3 pasos para contenido premium
-            </h2>
-          </div>
+      <section style={{ padding: '120px 28px', position: 'relative' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <Section style={{ textAlign: 'center', marginBottom: 72 }}>
+            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Flujo de trabajo</div></motion.div>
+            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
+              <span className="text-gradient">De idea a carrusel</span><br />en 3 pasos
+            </motion.h2>
+            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17, maxWidth: 480, margin: '0 auto' }}>
+              Sin diseñador. Sin agencia. Sin esperas.
+            </motion.p>
+          </Section>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {[
-              { n: '01', title: 'Escribe tu prompt', desc: 'Describe el contenido que quieres crear. Puede ser un tema médico, un producto, una historia. La IA entiende cualquier idea.' },
-              { n: '02', title: 'La IA diseña todo', desc: 'En segundos, la IA genera 10 slides completos: texto, diseño, imágenes hiperrealistas, hooks virales y CTAs de alta conversión.' },
-              { n: '03', title: 'Edita y exporta', desc: 'Ajusta lo que necesites en el editor visual. Luego exporta en alta resolución, listo para publicar en Instagram.' },
-            ].map((s, i) => (
-              <div key={i} className="card animate-fade-up" style={{ padding: '28px 32px', display: 'flex', gap: 28, alignItems: 'flex-start', animationDelay: `${i * 0.1}s` }}>
-                <span style={{ fontFamily: 'Georgia, serif', fontSize: 48, fontWeight: 700, color: 'var(--border-h)', lineHeight: 1, flexShrink: 0, marginTop: -4 }}>{s.n}</span>
-                <div>
-                  <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>{s.title}</h3>
-                  <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.7 }}>{s.desc}</p>
+          <Section>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
+              {STEPS.map((s, i) => (
+                <motion.div key={i} variants={scaleIn} style={{ padding: '40px 36px', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 20, position: 'relative', overflow: 'hidden', transition: 'all 0.2s' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, var(--indigo), transparent)`, opacity: 0.5 }} />
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 72, fontWeight: 700, color: 'var(--border-h)', lineHeight: 1, marginBottom: 24, opacity: 0.6 }}>{s.n}</p>
+                  <h3 className="h-card" style={{ marginBottom: 12, color: 'var(--text)' }}>{s.title}</h3>
+                  <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.75 }}>{s.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+          </Section>
+        </div>
+      </section>
+
+      {/* ── Features ── */}
+      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <Section style={{ textAlign: 'center', marginBottom: 72 }}>
+            <motion.div variants={fadeUp}><div className="badge badge-gold" style={{ marginBottom: 20 }}>Capacidades IA</div></motion.div>
+            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
+              Una agencia creativa<br /><span className="text-gradient-aurora">impulsada por IA</span>
+            </motion.h2>
+            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
+              Todo lo que necesitas para crear contenido premium, en un solo lugar.
+            </motion.p>
+          </Section>
+
+          <Section>
+            <motion.div variants={staggerFast} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+              {FEATURES.map((f, i) => (
+                <motion.div key={i} variants={scaleIn}
+                  className="card"
+                  style={{ padding: 28, cursor: 'default' }}
+                  whileHover={{ y: -4, borderColor: 'rgba(255,255,255,0.12)' }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--indigo-deep)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+                    <f.icon size={20} style={{ color: 'var(--indigo-h)' }} strokeWidth={1.8} />
+                  </div>
+                  <h3 className="h-card" style={{ marginBottom: 10 }}>{f.label}</h3>
+                  <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.7 }}>{f.desc}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </Section>
+        </div>
+      </section>
+
+      {/* ── Template Gallery ── */}
+      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <Section style={{ textAlign: 'center', marginBottom: 60 }}>
+            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Plantillas</div></motion.div>
+            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
+              <span className="text-gradient">Diseños de nivel</span><br />editorial premium
+            </motion.h2>
+            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17 }}>
+              Más de 50 plantillas diseñadas por directores creativos.
+            </motion.p>
+          </Section>
+
+          {/* Scrolling template strip */}
+          <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
+            {[...MOCK_SLIDES, ...MOCK_SLIDES, ...MOCK_SLIDES].map((s, i) => (
+              <motion.div key={i}
+                initial={{ opacity: 0, x: 40 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: (i % 3) * 0.1, duration: 0.5 }}
+                whileHover={{ y: -8, scale: 1.03 }}
+                style={{ width: 180, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0, position: 'relative', cursor: 'pointer', boxShadow: 'var(--shadow-card)' }}>
+                <div style={{ position: 'absolute', inset: 0, background: s.bg }} />
+                <img src={s.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, mixBlendMode: 'luminosity' }} onError={e => { e.target.style.opacity = 0 }} />
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)' }} />
+                <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
+                  <p style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.15em', color: s.accent, marginBottom: 4 }}>{s.label}</p>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{s.title[0]}</p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
+
+          <Section style={{ textAlign: 'center', marginTop: 40 }}>
+            <motion.button variants={fadeUp} className="btn-ghost btn" onClick={() => navigate('/studio?tab=templates')} style={{ padding: '11px 28px' }}>
+              Ver todas las plantillas <ArrowRight size={15} />
+            </motion.button>
+          </Section>
+        </div>
+      </section>
+
+      {/* ── Niches ── */}
+      <section style={{ padding: '60px 28px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <Section style={{ textAlign: 'center', marginBottom: 32 }}>
+            <motion.p variants={fadeUp} style={{ color: 'var(--text-3)', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>
+              Funciona para cualquier industria
+            </motion.p>
+          </Section>
+          <Section>
+            <motion.div variants={staggerFast} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              {NICHES.map((n, i) => (
+                <motion.span key={i} variants={fadeIn} className="chip" style={{ fontSize: 13, padding: '8px 18px' }}>{n}</motion.span>
+              ))}
+            </motion.div>
+          </Section>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <Section style={{ textAlign: 'center', marginBottom: 60 }}>
+            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Testimonios</div></motion.div>
+            <motion.h2 variants={fadeUp} className="h-section">
+              <span className="text-gradient">Creadores que ya</span><br />publican con IA
+            </motion.h2>
+          </Section>
+
+          <Section>
+            <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+              {TESTIMONIALS.map((t, i) => (
+                <motion.div key={i} variants={scaleIn} className="card" style={{ padding: 32 }} whileHover={{ y: -4 }}>
+                  <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
+                    {Array(t.stars).fill(0).map((_, j) => <Star key={j} size={14} fill="#f59e0b" color="#f59e0b" />)}
+                  </div>
+                  <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.75, marginBottom: 24, fontStyle: 'italic' }}>
+                    "{t.text}"
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--indigo), var(--violet))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                      {t.avatar}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700 }}>{t.name}</p>
+                      <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.role}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </Section>
         </div>
       </section>
 
       {/* ── Final CTA ── */}
-      <section style={{ padding: '100px 24px', borderTop: '1px solid var(--border)', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(99,102,241,0.08) 0%, transparent 100%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 600, margin: '0 auto', position: 'relative' }}>
-          <div style={{ width: 60, height: 60, borderRadius: 16, background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 32px', boxShadow: '0 20px 60px rgba(99,102,241,0.4)' }}>
-            <Sparkles size={28} color="white" />
-          </div>
-          <h2 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 16 }}>
-            Empieza a crear<br /><span className="grad-accent">ahora mismo</span>
-          </h2>
-          <p style={{ color: 'var(--text-2)', fontSize: 16, marginBottom: 40, lineHeight: 1.7 }}>
-            Sin tarjeta de crédito. Sin API keys. Sin configuración.<br />
-            Solo escribe tu idea y la IA hace el resto.
-          </p>
-          <button className="btn-primary" style={{ padding: '15px 36px', fontSize: 16, borderRadius: 14 }} onClick={() => navigate('/studio')}>
-            <Sparkles size={20} /> Crear mi primer carrusel
-          </button>
-          <p style={{ marginTop: 20, color: 'var(--text-3)', fontSize: 13 }}>Gratis para siempre en el plan básico</p>
+      <section style={{ padding: '140px 28px', position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)' }} />
+          <div className="dot-grid" style={{ position: 'absolute', inset: 0, opacity: 0.5 }} />
         </div>
+
+        <Section style={{ textAlign: 'center', position: 'relative' }}>
+          <motion.div variants={fadeUp} style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+            <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 20px 80px rgba(99,102,241,0.45)', animation: 'pulse-glow 3s ease infinite' }}>
+              <Sparkles size={32} color="white" strokeWidth={2} />
+            </div>
+          </motion.div>
+          <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 20 }}>
+            Empieza a crear<br /><span className="text-gradient-indigo">ahora mismo</span>
+          </motion.h2>
+          <motion.p variants={fadeUp} style={{ fontSize: 17, color: 'var(--text-2)', maxWidth: 520, margin: '0 auto 44px', lineHeight: 1.8 }}>
+            Sin tarjeta de crédito. Sin configuraciones técnicas. Solo escribe tu idea y la IA hace el resto.
+          </motion.p>
+          <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button className="btn-hero btn" style={{ padding: '15px 36px', fontSize: 16 }} onClick={() => navigate('/studio')}>
+              <Sparkles size={20} strokeWidth={2.5} /> Crear mi primer carrusel
+            </button>
+          </motion.div>
+          <motion.p variants={fadeUp} style={{ marginTop: 20, color: 'var(--text-3)', fontSize: 13 }}>
+            Gratis para siempre en el plan básico
+          </motion.p>
+        </Section>
       </section>
 
       {/* ── Footer ── */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 24px' }}>
+      <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 28px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 24, height: 24, borderRadius: 6, background: 'linear-gradient(135deg, #6366f1, #818cf8)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={12} color="white" />
+            <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={13} color="white" />
             </div>
-            <span style={{ fontSize: 14, fontWeight: 600 }}>SocialCanvas</span>
+            <span style={{ fontWeight: 800, fontSize: 15 }}>Social<span style={{ color: 'var(--indigo-h)' }}>Canvas</span></span>
           </div>
-          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Hecho con IA para creadores de contenido premium</p>
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>© 2026 SocialCanvas · Hecho con IA para creadores premium</p>
         </div>
       </footer>
     </div>
