@@ -7,7 +7,7 @@ const SYSTEM_PROMPT = `Eres un director creativo de élite, experto en:
 - Copywriting de alta conversión en español
 - Diseño editorial de lujo (nivel Vogue Beauty, Dior, Chanel)
 - Psicología del consumidor y persuasión ética
-- Medicina estética: botox, rellenos, skincare, PRP, bioestimuladores
+- Medicina estética: rellenos, skincare, PRP, bioestimuladores, tratamientos faciales
 
 Tu tarea es crear el contenido completo y detallado de un carrusel premium de Instagram de 10 slides.
 

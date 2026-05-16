@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { Sparkles, ArrowRight, Layers, Grid3x3, Video, Image, Zap, Star, CheckCircle } from 'lucide-react'
 
 const SLIDES_DEMO = [
-  { label: 'MEDICINA ESTÉTICA', title: ['Todo sobre', 'el Botox'], accent: 'Guía médica premium', bg: '#0C1A28', img: 'https://image.pollinations.ai/prompt/elegant%20woman%20glowing%20skin%20champagne%20light%20editorial%20luxury?model=flux&width=400&height=500&seed=42&nologo=true' },
+  { label: 'MEDICINA ESTÉTICA', title: ['Tu mejor versión', 'comienza aquí'], accent: 'Tratamientos de precisión', bg: '#0C1A28', img: 'https://image.pollinations.ai/prompt/elegant%20woman%20glowing%20skin%20champagne%20light%20editorial%20luxury?model=flux&width=400&height=500&seed=42&nologo=true' },
   { label: '01 / BENEFICIOS', title: ['6 razones para', 'elegirlo'], accent: 'Ciencia y precisión', bg: '#1A0C28', img: 'https://image.pollinations.ai/prompt/luxury%20medical%20clinic%20golden%20light%20premium%20minimal?model=flux&width=400&height=500&seed=43&nologo=true' },
   { label: '02 / RESULTADOS', title: ['Resultados', 'en 14 días'], accent: 'Timeline exacto', bg: '#0C2818', img: 'https://image.pollinations.ai/prompt/beautiful%20woman%20natural%20radiant%20skin%20champagne%20editorial?model=flux&width=400&height=500&seed=44&nologo=true' },
 ]

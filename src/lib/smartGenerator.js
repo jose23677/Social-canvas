@@ -22,7 +22,6 @@ function capitalize(str) {
 
 function detectCategory(topic) {
   const t = topic.toLowerCase()
-  if (/botox|toxina|botulínica|neuromodulador/i.test(t)) return 'botox'
   if (/rellen|filler|hialurónico|dermal/i.test(t)) return 'filler'
   if (/prp|plasma|plaqueta/i.test(t)) return 'prp'
   if (/bioestimulador|colágeno|sculptra|radiesse/i.test(t)) return 'bioestimulador'
@@ -40,33 +39,6 @@ function getTopicShort(topic) {
 }
 
 const CATEGORY_DATA = {
-  botox: {
-    what: 'proteína neuromoduladora purificada que bloquea temporalmente las señales nerviosas hacia los músculos faciales',
-    how: 'microinyecciones precisas en puntos anatómicos específicos relajan el músculo y suavizan las arrugas de expresión',
-    duration: '4 a 6 meses',
-    recovery: '15 a 30 minutos, sin tiempo de recuperación',
-    stat: '95%',
-    statLabel: 'satisfacción en pacientes tratados',
-    myths: [
-      { myth: '"Deja la cara congelada"', truth: 'La técnica moderna preserva tus expresiones naturales al 100%.' },
-      { myth: '"Solo es para personas mayores"', truth: 'El botox preventivo desde los 25 años es la estrategia más efectiva.' },
-      { myth: '"Es peligroso"', truth: 'Aprobado por la FDA con más de 20 años de evidencia clínica.' },
-      { myth: '"Duele mucho"', truth: 'Agujas ultrafinas 30G. La mayoría siente solo una leve presión.' },
-    ],
-    timeline: [
-      { day: 'Día 1', title: 'Tratamiento completado', desc: 'Actividad normal inmediata. Leve enrojecimiento que desaparece en horas.' },
-      { day: 'Día 3–4', title: 'Primeros efectos', desc: 'La musculatura comienza a relajarse gradualmente.' },
-      { day: 'Día 7', title: 'Efecto visible', desc: 'Las arrugas se suavizan notablemente.' },
-      { day: 'Día 14', title: 'Resultado óptimo', desc: 'Tu mejor versión. Natural y luminosa.' },
-    ],
-    imagePrompts: {
-      cover: 'elegant woman 35 years natural glowing skin champagne background editorial Vogue Beauty portrait photorealistic',
-      educational: 'minimal facial anatomy diagram golden lines medical aesthetics illustration premium',
-      benefits: 'close-up woman radiant skin rested expression natural beauty luxury editorial',
-      myths: 'elegant confident woman calm expression luxury premium dark background',
-      trust: 'luxury medical clinic doctor gloved hands precision treatment premium atmosphere',
-    },
-  },
   filler: {
     what: 'gel biocompatible de ácido hialurónico que restaura volumen, hidratación y define contornos faciales de forma natural',
     how: 'inyecciones estratégicas en zonas específicas que reponen volumen perdido y mejoran la armonía facial',

@@ -4,7 +4,7 @@ import {
   Wand2, Brain, ChevronDown, ChevronUp, Eye, EyeOff,
   Globe, Video, FileText, ExternalLink, ImageIcon,
 } from 'lucide-react'
-import { TEMPLATES } from '../lib/templates/botoxCarousel'
+import { TEMPLATES } from '../lib/templates/carouselTemplates'
 import { generatePollinationsUrl, generateMidjourney, pollMidjourney } from '../lib/aiProviders'
 import { generateCarouselFromPrompt } from '../lib/aiCarouselGenerator'
 import { generateSmartCarousel } from '../lib/smartGenerator'
@@ -423,7 +423,7 @@ export default function ContentStudioPage() {
                       <p className="text-xs font-medium uppercase tracking-widest" style={labelStyle}>URL del artículo</p>
                       <div className="flex gap-2">
                         <input type="url" className="flex-1 px-3 py-2.5 rounded-xl text-sm focus:outline-none" style={inputStyle}
-                          placeholder="https://ejemplo.com/articulo-botox"
+                          placeholder="https://ejemplo.com/articulo-medicina-estetica"
                           value={aiUrl} onChange={e => { setAiUrl(e.target.value); setExtracted(null) }} />
                         <button onClick={extract} disabled={extracting || !aiUrl}
                           className="px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 disabled:opacity-50"

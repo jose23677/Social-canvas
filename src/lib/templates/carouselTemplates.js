@@ -1,0 +1,233 @@
+// ── Templates de carrusel premium ─────────────────────────────────────────────
+// Sin referencias a tratamientos específicos.
+// El generador inteligente crea el contenido según el prompt del usuario.
+
+export const medicinaEsteticaCarousel = {
+  id: 'medicina-estetica-premium',
+  title: 'Medicina Estética Premium',
+  subtitle: '10 slides · Editorial · Alta conversión',
+  category: 'Medicina Estética',
+  format: 'portrait',
+  palette: {
+    bg: '#F7F3EE', bg2: '#E8D5BE', accent: '#C4A882', text: '#2A2520', dark: '#0C2530',
+  },
+  slides: [
+    {
+      id: 1, type: 'cover', bgColor: '#0C2530', isDark: true,
+      imagePrompt: 'elegant woman natural glowing skin champagne background Vogue Beauty editorial portrait luxury medical aesthetics photorealistic',
+      imageStyle: 'luxury',
+      elements: {
+        label: 'MEDICINA ESTÉTICA PREMIUM',
+        headline: ['Tu mejor versión', 'comienza aquí'],
+        accent: 'Tratamientos de precisión · Resultados naturales',
+        cta: 'Desliza para descubrir →',
+        handle: '{handle}',
+      },
+    },
+    {
+      id: 2, type: 'educational', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'minimal medical aesthetic illustration golden lines face anatomy premium champagne tones editorial luxury',
+      imageStyle: 'illustration',
+      elements: {
+        label: '01 / FUNDAMENTOS',
+        headline: ['¿Qué es la', 'medicina estética?'],
+        accent: 'Ciencia aplicada a tu bienestar',
+        body: 'La medicina estética combina ciencia médica y arte visual para realzar tu apariencia de forma natural, segura y personalizada.\n\nCada tratamiento es diseñado específicamente para tu anatomía y objetivos.',
+        bullets: [
+          'Técnicas mínimamente invasivas',
+          'Resultados naturales y progresivos',
+          'Procedimientos certificados y seguros',
+          'Sin cirugía, sin cicatrices',
+        ],
+      },
+    },
+    {
+      id: 3, type: 'educational', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'luxury medical aesthetic clinic interior premium minimal champagne light professional elegant atmosphere',
+      imageStyle: 'cinematic',
+      elements: {
+        label: '02 / TRATAMIENTOS',
+        headline: ['Soluciones para', 'cada objetivo'],
+        accent: 'Protocolo personalizado para ti',
+        body: 'Diseñamos un plan de tratamiento a la medida de tus necesidades, metas y anatomía facial única.',
+        bullets: [
+          'Evaluación médica personalizada previa',
+          'Técnica adaptada a tu anatomía única',
+          'Procedimiento en 15–60 minutos',
+          'Seguimiento post-tratamiento incluido',
+        ],
+      },
+    },
+    {
+      id: 4, type: 'benefits', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'beautiful woman radiant natural skin rested expression warm light editorial lifestyle luxury beauty photography',
+      imageStyle: 'instagram',
+      elements: {
+        label: '03 / BENEFICIOS',
+        headline: ['6 razones para', 'cuidar tu piel'],
+        accent: 'Resultados documentados clínicamente',
+        benefits: [
+          { icon: '✦', title: 'Resultados naturales', desc: 'Tu expresión y personalidad siempre intactas.' },
+          { icon: '✦', title: 'Sin cirugía', desc: 'Sin cicatrices ni tiempo de recuperación prolongado.' },
+          { icon: '✦', title: 'Procedimiento rápido', desc: 'Retoma tu rutina el mismo día del tratamiento.' },
+          { icon: '✦', title: 'Efecto duradero', desc: 'Resultados que se mantienen meses con mantenimiento.' },
+          { icon: '✦', title: 'Alta satisfacción', desc: 'Más del 95% de pacientes recomiendan el tratamiento.' },
+          { icon: '✦', title: 'Prevención activa', desc: 'Invierte en tu piel hoy para resultados futuros.' },
+        ],
+      },
+    },
+    {
+      id: 5, type: 'myths', bgColor: '#0C2530', isDark: true,
+      imagePrompt: 'elegant confident woman calm premium luxury dark background sophisticated editorial beauty portrait',
+      imageStyle: 'cinematic',
+      elements: {
+        label: '04 / MITOS VS REALIDAD',
+        headline: ['Lo que debes', 'saber antes de', 'decidir'],
+        accent: 'La verdad basada en evidencia médica',
+        myths: [
+          { myth: '"Los resultados se ven artificiales"', truth: 'Con técnica experta el resultado es completamente natural e imperceptible.' },
+          { myth: '"Solo es vanidad"', truth: 'Es una inversión en tu bienestar, autoestima y calidad de vida.' },
+          { myth: '"Duele mucho"', truth: 'Los procedimientos modernos son mínimamente molestos. La comodidad es prioridad.' },
+          { myth: '"Es muy costoso"', truth: 'Existen tratamientos para cada presupuesto con resultados extraordinarios.' },
+        ],
+      },
+    },
+    {
+      id: 6, type: 'timeline', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'minimal golden timeline dots lines luxury medical aesthetic illustration champagne background premium no faces',
+      imageStyle: 'illustration',
+      elements: {
+        label: '05 / EVOLUCIÓN',
+        headline: ['Tu proceso', 'paso a paso'],
+        accent: 'Cada etapa diseñada para tu comodidad',
+        timeline: [
+          { day: 'Consulta', title: 'Evaluación personalizada', desc: 'Diagnóstico facial completo y plan de tratamiento a tu medida.' },
+          { day: 'Sesión', title: 'Procedimiento preciso', desc: 'Técnica experta con máximo confort y seguridad.' },
+          { day: 'Días siguientes', title: 'Evolución natural', desc: 'Los resultados se desarrollan de forma progresiva y natural.' },
+          { day: 'Resultado final', title: 'Tu mejor versión', desc: 'Luminosa, natural y completamente tú.' },
+        ],
+      },
+    },
+    {
+      id: 7, type: 'stat', bgColor: '#E8D5BE', isDark: false,
+      imagePrompt: 'abstract luxury golden numbers statistics champagne background premium minimal medical aesthetic',
+      imageStyle: 'illustration',
+      elements: {
+        label: '06 / RESULTADOS',
+        headline: ['Números que', 'hablan solos'],
+        statNumber: '95%',
+        statLabel: 'de satisfacción en pacientes',
+        accent: 'Evidencia clínica respaldada',
+        body: 'La medicina estética moderna ofrece resultados previsibles, seguros y naturales cuando es realizada por especialistas certificados.',
+        factors: [
+          { name: '95%', desc: 'Satisfacción de pacientes' },
+          { name: '+15 años', desc: 'De experiencia clínica respaldada' },
+        ],
+      },
+    },
+    {
+      id: 8, type: 'preventive', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'young elegant woman confident smile natural beauty warm light lifestyle editorial premium skincare',
+      imageStyle: 'luxury',
+      elements: {
+        label: '07 / MEDICINA PREVENTIVA',
+        headline: ['Cuida tu piel', 'desde hoy'],
+        accent: 'La prevención es la mejor inversión',
+        body: 'Los mejores resultados se logran cuando comenzamos a cuidar la piel a tiempo, antes de que los signos del tiempo se vuelvan permanentes.',
+        bullets: [
+          'Quieres mejorar tu apariencia de forma natural',
+          'Buscas resultados sin procedimientos invasivos',
+          'Valoras tu tiempo con tratamientos eficientes',
+          'Deseas una inversión a largo plazo en tu bienestar',
+        ],
+        quote: 'La mejor versión de ti misma puede verse completamente natural.',
+      },
+    },
+    {
+      id: 9, type: 'trust', bgColor: '#F7F3EE', isDark: false,
+      imagePrompt: 'luxury medical clinic doctor gloved hands precision treatment premium atmosphere cinematic warm light',
+      imageStyle: 'cinematic',
+      elements: {
+        label: '08 / POR QUÉ ELEGIRNOS',
+        headline: ['Tu seguridad,', 'nuestra', 'prioridad'],
+        accent: 'Estándares médicos internacionales',
+        pillars: [
+          { title: 'EVALUACIÓN\nPERSONALIZADA', desc: 'Historia clínica completa y diagnóstico individualizado.' },
+          { title: 'TÉCNICA\nCERTIFICADA', desc: 'Formación avalada con años de experiencia documentada.' },
+          { title: 'SEGUIMIENTO\nGARANTIZADO', desc: 'Control post-tratamiento incluido en cada sesión.' },
+        ],
+        credentials: [
+          'Médico especializado en medicina estética',
+          'Productos certificados de marcas reconocidas',
+          'Instalaciones con estándares internacionales',
+        ],
+        quote: '"La diferencia entre un resultado natural y uno artificial es la mano del médico."',
+        doctor: '{doctor}',
+      },
+    },
+    {
+      id: 10, type: 'cta', bgColor: '#0C2530', isDark: true,
+      imagePrompt: 'elegant woman luxury spa reception golden champagne teal premium medical clinic invitation warm atmosphere',
+      imageStyle: 'luxury',
+      elements: {
+        label: 'TU PRÓXIMO PASO',
+        headline: ['Tu consulta', 'personalizada', 'te espera.'],
+        subheadline: 'AGENDA HOY — SIN COMPROMISO',
+        accent: 'Evaluación completa · Cupos limitados',
+        bullets: [
+          '✦ Diagnóstico facial completo sin costo',
+          '✦ Plan de tratamiento a tu medida',
+          '✦ Seguimiento médico incluido',
+        ],
+        ctaInstagram: '{handle}',
+        ctaWhatsapp: '{whatsapp}',
+        trust: 'Cupos limitados · Reserva tu espacio hoy',
+        doctor: '{doctor}',
+      },
+    },
+  ],
+}
+
+export const TEMPLATES = [
+  {
+    id: 'medicina-estetica-premium',
+    title: 'Medicina Estética Premium',
+    subtitle: '10 slides · Diseño editorial · Alta conversión',
+    category: 'Medicina Estética',
+    slides: 10,
+    color: '#C4A882',
+    emoji: '✦',
+    data: medicinaEsteticaCarousel,
+    tags: ['viral', 'educativo', 'conversión'],
+  },
+  {
+    id: 'coming-soon-1',
+    title: 'Skincare & Cuidado Facial',
+    subtitle: 'Próximamente',
+    category: 'Belleza',
+    slides: 10,
+    color: '#B09080',
+    emoji: '◈',
+    comingSoon: true,
+  },
+  {
+    id: 'coming-soon-2',
+    title: 'Lifestyle & Wellness',
+    subtitle: 'Próximamente',
+    category: 'Salud',
+    slides: 8,
+    color: '#8C9E8C',
+    emoji: '◉',
+    comingSoon: true,
+  },
+  {
+    id: 'coming-soon-3',
+    title: 'Branding Personal',
+    subtitle: 'Próximamente',
+    category: 'Marketing',
+    slides: 8,
+    color: '#8C9EA8',
+    emoji: '◌',
+    comingSoon: true,
+  },
+]
