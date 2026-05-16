@@ -4,7 +4,6 @@ import { persist } from 'zustand/middleware'
 export const useStore = create(
   persist(
     (set, get) => ({
-      // Theme — default dark (platform designed for dark mode)
       darkMode: true,
       toggleDarkMode: () => {
         const next = !get().darkMode
@@ -13,33 +12,16 @@ export const useStore = create(
         document.documentElement.classList.toggle('light', !next)
       },
 
-      // Language
-      language: 'es',
-      setLanguage: (lang) => set({ language: lang }),
-
-      // Auth
-      user: null,
-      setUser: (user) => set({ user }),
-
-      // Canvas state
-      currentFormat: 'square',
-      setFormat: (format) => set({ currentFormat: format }),
-
-      canvasJson: null,
-      setCanvasJson: (json) => set({ canvasJson: json }),
-
-      // Carousel slides
+      // Canvas slides
       slides: [null],
       currentSlide: 0,
-      setSlides: (slides) => set({ slides }),
-      setCurrentSlide: (idx) => set({ currentSlide: idx }),
+      currentFormat: 'portrait',
+      setSlides: (s) => set({ slides: s }),
+      setCurrentSlide: (i) => set({ currentSlide: i }),
+      setFormat: (f) => set({ currentFormat: f }),
       addSlide: () => {
         const slides = [...get().slides, null]
         set({ slides, currentSlide: slides.length - 1 })
-      },
-      removeSlide: (idx) => {
-        const slides = get().slides.filter((_, i) => i !== idx)
-        set({ slides: slides.length ? slides : [null], currentSlide: 0 })
       },
       saveCurrentSlide: (json) => {
         const slides = [...get().slides]
@@ -47,35 +29,22 @@ export const useStore = create(
         set({ slides })
       },
 
-      // Studio slides — generated from Creative Studio, loaded into canvas
+      // Studio slides (from generator → editor)
       studioSlides: null,
-      setStudioSlides: (slides) => set({ studioSlides: slides }),
+      setStudioSlides: (s) => set({ studioSlides: s }),
       clearStudioSlides: () => set({ studioSlides: null }),
 
-      // Service API keys (stored locally only)
-      apiKeys: {},
-      setApiKey: (service, key) =>
-        set((s) => ({ apiKeys: { ...s.apiKeys, [service]: key } })),
-
-      // AI image results
-      aiResults: [],
-      setAiResults: (results) => set({ aiResults: results }),
-      addAiResult: (result) => set((s) => ({ aiResults: [result, ...s.aiResults.slice(0, 19)] })),
-
-      // Projects (local cache)
+      // Gallery
       projects: [],
-      setProjects: (projects) => set({ projects }),
+      setProjects: (p) => set({ projects: p }),
     }),
     {
-      name: 'social-canvas-store',
+      name: 'aure-store',
       partialize: (s) => ({
         darkMode: s.darkMode,
-        language: s.language,
-        apiKeys: s.apiKeys,
         slides: s.slides,
         currentFormat: s.currentFormat,
         projects: s.projects,
-        // studioSlides NOT persisted — session only
       }),
     }
   )

@@ -2,65 +2,39 @@ import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useStore } from './store/useStore'
-import { getSession, getSupabase } from './lib/supabase'
+import Nav from './components/Nav'
+import Landing  from './pages/Landing'
+import Create   from './pages/Create'
+import Editor   from './pages/Editor'
+import Grid     from './pages/Grid'
+import Gallery  from './pages/Gallery'
+import Reels    from './pages/Reels'
 
-// Layout
-import AppLayout from './components/Layout/AppLayout'
-
-// Pages
-import LandingPage        from './pages/LandingPage'
-import ContentStudioPage  from './pages/ContentStudioPage'
-import GridSplitterPage   from './pages/GridSplitterPage'
-import GalleryPage        from './pages/GalleryPage'
-import AIVideoPage        from './pages/AIVideoPage'
-import SettingsPage       from './pages/SettingsPage'
-import AuthPage           from './components/Auth/AuthPage'
-
-// Canvas editor (for /editor route)
-import CanvasEditor from './components/Editor/CanvasEditor'
-
-import './i18n'
-
-// Pages that use the sidebar layout
-const APP_ROUTES = ['/studio', '/editor', '/grid', '/gallery', '/reels', '/settings']
+const NO_NAV = ['/']
 
 export default function App() {
-  const { darkMode, setUser } = useStore()
+  const { darkMode } = useStore()
   const location = useLocation()
+  const showNav = !NO_NAV.includes(location.pathname)
 
-  const isApp = APP_ROUTES.some(r => location.pathname.startsWith(r))
-
-  // Sync dark / light class — both for Tailwind (dark:) and CSS vars (.light)
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode)
     document.documentElement.classList.toggle('light', !darkMode)
   }, [darkMode])
 
-  // Restore auth session
-  useEffect(() => {
-    getSession().then(session => { if (session?.user) setUser(session.user) })
-    const sb = getSupabase()
-    if (!sb) return
-    const { data: l } = sb.auth.onAuthStateChange((_e, session) => setUser(session?.user || null))
-    return () => l?.subscription?.unsubscribe()
-  }, [])
-
-  const routes = (
-    <Routes>
-      <Route path="/"        element={<LandingPage />} />
-      <Route path="/auth"    element={<AuthPage />} />
-      <Route path="/studio"  element={<ContentStudioPage />} />
-      <Route path="/editor"  element={<CanvasEditor />} />
-      <Route path="/grid"    element={<GridSplitterPage />} />
-      <Route path="/gallery" element={<GalleryPage />} />
-      <Route path="/reels"   element={<AIVideoPage />} />
-      <Route path="/settings"element={<SettingsPage />} />
-    </Routes>
-  )
-
   return (
-    <>
-      {isApp ? <AppLayout>{routes}</AppLayout> : routes}
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {showNav && <Nav />}
+      <main style={{ flex: 1 }}>
+        <Routes>
+          <Route path="/"        element={<Landing />} />
+          <Route path="/create"  element={<Create />} />
+          <Route path="/editor"  element={<Editor />} />
+          <Route path="/grid"    element={<Grid />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/reels"   element={<Reels />} />
+        </Routes>
+      </main>
       <Toaster
         position="bottom-right"
         toastOptions={{
@@ -68,11 +42,11 @@ export default function App() {
             background: 'var(--bg-2)',
             color: 'var(--text)',
             border: '1px solid var(--border)',
-            borderRadius: '12px',
+            borderRadius: '10px',
             fontSize: '14px',
           },
         }}
       />
-    </>
+    </div>
   )
 }
