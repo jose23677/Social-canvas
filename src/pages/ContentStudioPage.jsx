@@ -7,6 +7,7 @@ import {
 import { TEMPLATES } from '../lib/templates/botoxCarousel'
 import { generatePollinationsUrl, generateMidjourney, pollMidjourney } from '../lib/aiProviders'
 import { generateCarouselFromPrompt } from '../lib/aiCarouselGenerator'
+import { generateSmartCarousel } from '../lib/smartGenerator'
 import { extractFromUrl, extractFromYoutube, extractFromPdf } from '../lib/contentExtractor'
 import { useStore } from '../store/useStore'
 import { cn } from '../components/UI'
@@ -36,10 +37,11 @@ const TONES = [
 ]
 
 const AI_TEXT_PROVIDERS = [
-  { value: 'groq',         label: '🦙 Groq — Llama 3.3 ✦ Recomendado (gratis)', keyPlaceholder: 'gsk_...', link: 'https://console.groq.com/keys' },
-  { value: 'pollinations', label: '⚡ Pollinations (sin key, puede fallar)',       keyPlaceholder: null,      link: null },
-  { value: 'claude',       label: '🧠 Claude Haiku (Anthropic)',                   keyPlaceholder: 'sk-ant-...', link: 'https://console.anthropic.com' },
-  { value: 'openai',       label: '💡 GPT-4o Mini (OpenAI)',                       keyPlaceholder: 'sk-...', link: 'https://platform.openai.com/api-keys' },
+  { value: 'instant',      label: '⚡ Generación Instantánea ✦ Sin key, sin registro', keyPlaceholder: null,      link: null },
+  { value: 'groq',         label: '🦙 Groq — Llama 3.3 (gratis con key)',              keyPlaceholder: 'gsk_...', link: 'https://console.groq.com/keys' },
+  { value: 'pollinations', label: '⚡ Pollinations (sin key, puede fallar)',            keyPlaceholder: null,      link: null },
+  { value: 'claude',       label: '🧠 Claude Haiku (Anthropic)',                        keyPlaceholder: 'sk-ant-...', link: 'https://console.anthropic.com' },
+  { value: 'openai',       label: '💡 GPT-4o Mini (OpenAI)',                            keyPlaceholder: 'sk-...', link: 'https://platform.openai.com/api-keys' },
 ]
 
 const INPUT_TYPES = [
@@ -73,7 +75,7 @@ export default function ContentStudioPage() {
   const [aiTone, setAiTone] = useState('educational')
 
   // AI providers
-  const [textProvider, setTextProvider] = useState('groq')
+  const [textProvider, setTextProvider] = useState('instant')
   const [textKey, setTextKey] = useState('')
   const [showTextKey, setShowTextKey] = useState(false)
   const [imageProvider, setImageProvider] = useState('flux')
@@ -160,17 +162,31 @@ export default function ContentStudioPage() {
 
     setGenerating(true)
     setProgress(0)
-    setStatus('La IA está investigando y estructurando el contenido...')
 
     try {
-      const { slides: aiSlides, meta: aiMeta } = await generateCarouselFromPrompt({
-        topic: topic || 'Carrusel médico premium',
-        extraInfo: extra,
-        tone: aiTone,
-        brand,
-        aiProvider: textProvider,
-        apiKey: textKey,
-      })
+      let aiSlides, aiMeta
+
+      if (textProvider === 'instant') {
+        // ── Generación instantánea local — sin API, sin key ──
+        setStatus('Generando estructura del carrusel...')
+        await new Promise(r => setTimeout(r, 400)) // brief pause for UX
+        const result = generateSmartCarousel({ topic: topic || 'Tratamiento estético premium', brand, tone: aiTone })
+        aiSlides = result.slides
+        aiMeta = result.meta
+      } else {
+        // ── Generación con IA externa ──
+        setStatus('La IA está investigando y estructurando el contenido...')
+        const result = await generateCarouselFromPrompt({
+          topic: topic || 'Carrusel médico premium',
+          extraInfo: extra,
+          tone: aiTone,
+          brand,
+          aiProvider: textProvider,
+          apiKey: textKey,
+        })
+        aiSlides = result.slides
+        aiMeta = result.meta
+      }
 
       setMeta(aiMeta)
       const pal_ = PALETTE_MAP[brand.style] || PALETTE_MAP['luxury-nude']
@@ -472,6 +488,17 @@ export default function ContentStudioPage() {
                     </div>
                   )}
 
+                  {/* ── Instant: no key needed ── */}
+                  {textProvider === 'instant' && (
+                    <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: `${pal.accent}15`, border: `1px solid ${pal.accent}40` }}>
+                      <span className="text-xl">⚡</span>
+                      <div>
+                        <p className="text-xs font-semibold" style={{ color: palette.isDark ? pal.white : '#2A2520' }}>Generación Instantánea activada</p>
+                        <p className="text-xs mt-0.5" style={{ color: `${pal.accent}90` }}>Sin API key · Sin registro · Funciona siempre · 10 slides en segundos</p>
+                      </div>
+                    </div>
+                  )}
+
                   {/* ── Groq key — visible siempre que esté seleccionado ── */}
                   {textProvider === 'groq' && (
                     <div className="rounded-xl border-2 p-4 space-y-2" style={{ borderColor: textKey ? `${pal.accent}60` : '#FCD34D', background: textKey ? `${pal.accent}08` : '#FFFBEB' }}>
@@ -688,31 +715,37 @@ export default function ContentStudioPage() {
               {mode === 'ai' ? 'La IA construirá tu carrusel' : 'Todo listo para generar'}
             </h2>
 
-            {/* Groq recommendation banner */}
+            {/* Mode info banner */}
+            {mode === 'ai' && textProvider === 'instant' && (
+              <div className="p-4 rounded-xl text-left flex items-start gap-3" style={{ background: `${pal.accent}12`, border: `1px solid ${pal.accent}40` }}>
+                <span className="text-2xl mt-0.5">⚡</span>
+                <div>
+                  <p className="text-sm font-semibold" style={{ color: palette.isDark ? pal.white : '#2A2520' }}>Generación Instantánea</p>
+                  <p className="text-xs mt-1" style={{ color: palette.isDark ? `${pal.accent}CC` : '#6B7280' }}>
+                    Genera 10 slides profesionales en segundos. Sin API key, sin cuenta, sin esperas.
+                    Las imágenes se generan con Flux (gratis y hiperrealista).
+                  </p>
+                </div>
+              </div>
+            )}
             {mode === 'ai' && textProvider === 'groq' && !textKey && (
               <div className="p-4 rounded-xl text-left" style={{ background: '#FFFBEB', border: '1px solid #FCD34D' }}>
-                <p className="text-sm font-semibold text-amber-800 mb-1">🦙 Configurar Groq (gratis, 1 minuto)</p>
-                <p className="text-xs text-amber-700 mb-2">Groq es gratis y mucho más estable que Pollinations. Necesitas una API key:</p>
-                <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside">
-                  <li>Ve a <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="underline font-medium">console.groq.com/keys</a></li>
-                  <li>Crea cuenta gratis y genera una API key</li>
-                  <li>Pégala en <strong>Configuración avanzada → Motor de texto IA</strong></li>
-                </ol>
-                <button onClick={() => setStep('brand')} className="mt-3 text-xs font-medium underline text-amber-800">
-                  ← Volver a configurar
+                <p className="text-sm font-semibold text-amber-800 mb-1">⚠ Falta la API key de Groq</p>
+                <button onClick={() => setStep('brand')} className="text-xs font-medium underline text-amber-800">
+                  ← Volver y configurar
                 </button>
               </div>
             )}
             {mode === 'ai' && textProvider === 'pollinations' && (
               <div className="p-3 rounded-xl text-left text-xs" style={{ background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' }}>
-                ⚠ Pollinations puede estar inestable. Si falla, vuelve y usa <strong>Groq</strong> (gratis).
+                ⚠ Pollinations puede estar inestable. Si falla, vuelve y usa <strong>Generación Instantánea</strong>.
               </div>
             )}
 
             {/* Summary */}
             <div className="p-5 rounded-2xl border text-left space-y-2" style={{ borderColor: `${pal.accent}30`, background: palette.isDark ? pal.bg2 : '#FDFAF7' }}>
               {[
-                { k: 'Modo', v: mode === 'ai' ? `Prompt IA · ${INPUT_TYPES.find(t => t.value === inputType)?.label}` : selectedTemplate?.title },
+                { k: 'Generador', v: mode === 'ai' ? (textProvider === 'instant' ? '⚡ Instantáneo (sin key)' : AI_TEXT_PROVIDERS.find(p => p.value === textProvider)?.label?.split(' (')[0]) : selectedTemplate?.title },
                 { k: 'Imágenes', v: imageProvider === 'midjourney' ? '🎨 Midjourney' : '⚡ Flux (hiperrealista)' },
                 { k: 'Tono', v: TONES.find(t => t.value === aiTone)?.label },
                 { k: 'Médico', v: brand.doctor || '—' },
