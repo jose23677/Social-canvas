@@ -1,63 +1,77 @@
 import { useEffect } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { useStore } from './store/useStore'
 import { getSession, getSupabase } from './lib/supabase'
-import Header from './components/Layout/Header'
+
+// Layout
+import AppLayout from './components/Layout/AppLayout'
+
+// Pages
+import LandingPage        from './pages/LandingPage'
+import ContentStudioPage  from './pages/ContentStudioPage'
+import GridSplitterPage   from './pages/GridSplitterPage'
+import GalleryPage        from './pages/GalleryPage'
+import AIVideoPage        from './pages/AIVideoPage'
+import SettingsPage       from './pages/SettingsPage'
+import AuthPage           from './components/Auth/AuthPage'
+
+// Canvas editor (for /editor route)
 import CanvasEditor from './components/Editor/CanvasEditor'
-import AuthPage from './components/Auth/AuthPage'
-import SettingsPage from './pages/SettingsPage'
-import ApiKeysPage from './pages/ApiKeysPage'
-import GalleryPage from './pages/GalleryPage'
-import AIVideoPage from './pages/AIVideoPage'
-import ContentStudioPage from './pages/ContentStudioPage'
-import GridSplitterPage from './pages/GridSplitterPage'
+
 import './i18n'
+
+// Pages that use the sidebar layout
+const APP_ROUTES = ['/studio', '/editor', '/grid', '/gallery', '/reels', '/settings']
 
 export default function App() {
   const { darkMode, setUser } = useStore()
+  const location = useLocation()
 
-  // Sync dark mode class
+  const isApp = APP_ROUTES.some(r => location.pathname.startsWith(r))
+
+  // Sync dark mode / light mode class
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode)
+    document.documentElement.classList.toggle('light', !darkMode)
   }, [darkMode])
 
   // Restore auth session
   useEffect(() => {
-    getSession().then((session) => {
-      if (session?.user) setUser(session.user)
-    })
-
+    getSession().then(session => { if (session?.user) setUser(session.user) })
     const sb = getSupabase()
     if (!sb) return
-    const { data: listener } = sb.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null)
-    })
-    return () => listener?.subscription?.unsubscribe()
+    const { data: l } = sb.auth.onAuthStateChange((_e, session) => setUser(session?.user || null))
+    return () => l?.subscription?.unsubscribe()
   }, [])
 
+  const routes = (
+    <Routes>
+      <Route path="/"        element={<LandingPage />} />
+      <Route path="/auth"    element={<AuthPage />} />
+      <Route path="/studio"  element={<ContentStudioPage />} />
+      <Route path="/editor"  element={<CanvasEditor />} />
+      <Route path="/grid"    element={<GridSplitterPage />} />
+      <Route path="/gallery" element={<GalleryPage />} />
+      <Route path="/reels"   element={<AIVideoPage />} />
+      <Route path="/settings"element={<SettingsPage />} />
+    </Routes>
+  )
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<CanvasEditor />} />
-          <Route path="/auth" element={<AuthPage />} />
-          <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/ai-video" element={<AIVideoPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="/apikeys" element={<ApiKeysPage />} />
-          <Route path="/studio" element={<ContentStudioPage />} />
-          <Route path="/grid" element={<GridSplitterPage />} />
-        </Routes>
-      </main>
+    <>
+      {isApp ? <AppLayout>{routes}</AppLayout> : routes}
       <Toaster
         position="bottom-right"
         toastOptions={{
-          className: 'dark:bg-slate-800 dark:text-white',
-          style: { borderRadius: '12px', fontSize: '14px' },
+          style: {
+            background: 'var(--bg-2)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
+            borderRadius: '12px',
+            fontSize: '14px',
+          },
         }}
       />
-    </div>
+    </>
   )
 }

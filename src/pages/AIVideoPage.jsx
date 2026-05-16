@@ -1,330 +1,164 @@
 import { useState, useRef } from 'react'
-import { Video, Wand2, Download, Upload, X, Sparkles, ChevronDown, ChevronUp, RefreshCw, ImageIcon } from 'lucide-react'
-import { generateRunway, pollRunway, generateHiggsfield, pollHiggsfield, generatePollinationsUrl, fetchImageAsDataUrl } from '../lib/aiProviders'
-import { Button, Select, Spinner, Card, cn } from '../components/UI'
+import { Video, Wand2, Download, Upload, X, ChevronDown, ChevronUp, ImageIcon, Sparkles } from 'lucide-react'
+import { generatePollinationsUrl } from '../lib/aiProviders'
 import toast from 'react-hot-toast'
 
-const LOCAL_KEYS = 'sc_inline_keys'
-const loadKeys = () => { try { return JSON.parse(localStorage.getItem(LOCAL_KEYS) || '{}') } catch { return {} } }
-const saveKeys = (k) => localStorage.setItem(LOCAL_KEYS, JSON.stringify(k))
-
-const DURATIONS = [
-  { value: '4', label: '4 segundos' },
-  { value: '8', label: '8 segundos' },
-  { value: '16', label: '16 segundos' },
-]
-
 const MOODS = [
-  { value: 'cinematic', label: '🎬 Cinematográfico' },
-  { value: 'dynamic', label: '⚡ Dinámico' },
-  { value: 'smooth', label: '🌊 Suave / Fluido' },
-  { value: 'dramatic', label: '🌑 Dramático' },
+  { v: 'cinematic', label: '🎬 Cinematográfico' },
+  { v: 'dynamic',   label: '⚡ Dinámico' },
+  { v: 'smooth',    label: '🌊 Suave' },
+  { v: 'dramatic',  label: '🌑 Dramático' },
 ]
 
 const MOOD_SUFFIX = {
-  cinematic: 'cinematic camera movement, film look, dramatic lighting',
-  dynamic: 'fast dynamic movement, energetic, vibrant',
-  smooth: 'smooth slow motion, fluid movement, calm',
-  dramatic: 'dramatic atmosphere, dark moody, intense',
+  cinematic: 'cinematic camera movement film look dramatic lighting',
+  dynamic:   'fast dynamic movement energetic vibrant',
+  smooth:    'smooth slow motion fluid movement calm',
+  dramatic:  'dramatic atmosphere dark moody intense',
 }
+
+const STORYBOARD_LABELS = ['Apertura', 'Desarrollo', 'Clímax', 'Cierre']
 
 export default function AIVideoPage() {
   const [prompt, setPrompt] = useState('')
   const [mood, setMood] = useState('cinematic')
-  const [duration, setDuration] = useState('4')
-  const [provider, setProvider] = useState('runway')
   const [loading, setLoading] = useState(false)
-  const [progress, setProgress] = useState('')
-  const [videoUrl, setVideoUrl] = useState(null)
+  const [storyboard, setStoryboard] = useState([])
   const [refImage, setRefImage] = useState(null)
-  const [previewImages, setPreviewImages] = useState([])
-  const [showProviders, setShowProviders] = useState(false)
-  const [inlineKeys, setInlineKeys] = useState(loadKeys)
+  const [showVideo, setShowVideo] = useState(false)
   const fileRef = useRef(null)
 
-  const setKey = (k, v) => { const u = { ...inlineKeys, [k]: v }; setInlineKeys(u); saveKeys(u) }
-  const apiKey = inlineKeys[provider] || ''
+  const generate = async () => {
+    if (!prompt.trim()) return toast.error('Escribe qué reel quieres crear')
+    setLoading(true)
+    setStoryboard([])
 
-  const handleRefImage = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setRefImage(ev.target.result)
-    reader.readAsDataURL(file)
+    const frames = STORYBOARD_LABELS.map((l, i) => ({
+      label: l,
+      url: generatePollinationsUrl(
+        `${prompt}, ${MOOD_SUFFIX[mood]}, ${l.toLowerCase()} shot, frame ${i + 1}`,
+        'cinematic', 768, 432, 'flux'
+      ),
+    }))
+    setStoryboard(frames)
+    setLoading(false)
+    toast.success('Storyboard generado ✓')
   }
-
-  // Genera preview de storyboard con Pollinations (siempre gratis)
-  const generatePreview = async () => {
-    if (!prompt.trim()) return toast.error('Escribe qué video quieres generar')
-    setPreviewImages([])
-    const frames = [
-      `${prompt}, ${MOOD_SUFFIX[mood]}, frame 1, opening shot`,
-      `${prompt}, ${MOOD_SUFFIX[mood]}, frame 2, mid shot`,
-      `${prompt}, ${MOOD_SUFFIX[mood]}, frame 3, close up`,
-      `${prompt}, ${MOOD_SUFFIX[mood]}, frame 4, closing shot`,
-    ]
-    const urls = frames.map(f => generatePollinationsUrl(f, 'cinematic', 768, 432))
-    setPreviewImages(urls)
-    toast.success('Storyboard generado — previsualiza tu reel')
-  }
-
-  const pollVideo = (taskId, pollFn) => new Promise((resolve, reject) => {
-    let attempts = 0
-    const interval = setInterval(async () => {
-      attempts++
-      const elapsed = attempts * 5
-      setProgress(`Procesando... ${elapsed}s`)
-      try {
-        const url = await pollFn(taskId, apiKey)
-        if (url) { clearInterval(interval); resolve(url) }
-        else if (attempts > 72) { clearInterval(interval); reject(new Error('Tiempo agotado (6 min)')) }
-      } catch (err) { clearInterval(interval); reject(err) }
-    }, 5000)
-  })
-
-  const generateVideo = async () => {
-    if (!prompt.trim()) return toast.error('Escribe qué video quieres generar')
-    if (!apiKey) {
-      setShowProviders(true)
-      return toast.error(`Ingresa tu API Key de ${provider === 'runway' ? 'RunwayML' : 'Higgsfield'} en la sección de abajo`)
-    }
-    setLoading(true); setVideoUrl(null); setProgress('Iniciando...')
-    try {
-      const fullPrompt = `${prompt}, ${MOOD_SUFFIX[mood]}`
-      let taskId, url
-      if (provider === 'runway') {
-        taskId = await generateRunway(fullPrompt, apiKey, parseInt(duration))
-        url = await pollVideo(taskId, pollRunway)
-      } else {
-        taskId = await generateHiggsfield(fullPrompt, apiKey)
-        url = await pollVideo(taskId, pollHiggsfield)
-      }
-      setVideoUrl(url)
-      toast.success('¡Video generado exitosamente!')
-    } catch (err) { toast.error(err.message) }
-    finally { setLoading(false); setProgress('') }
-  }
-
-  const downloadVideo = async () => {
-    try {
-      const res = await fetch(videoUrl)
-      const blob = await res.blob()
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(blob)
-      a.download = `reel-${Date.now()}.mp4`
-      a.click()
-    } catch { window.open(videoUrl, '_blank') }
-  }
-
-  const PROVIDERS = [
-    { value: 'runway', label: 'RunwayML Gen-3', link: 'https://app.runwayml.com/settings', ph: 'key_...', desc: 'Mejor calidad general' },
-    { value: 'higgsfield', label: 'Higgsfield AI', link: 'https://app.higgsfield.ai/settings', ph: 'hf_...', desc: 'Movimiento de personajes' },
-  ]
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div style={{ padding: '48px 32px', maxWidth: 800, margin: '0 auto' }}>
 
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
-            <Video className="w-5 h-5 text-white" />
-          </div>
-          Generador de Reels IA
-        </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">
-          Describe tu reel y visualiza el storyboard al instante. Genera el video final con tu proveedor preferido.
-        </p>
+      <div style={{ marginBottom: 40 }}>
+        <p className="label" style={{ marginBottom: 8 }}>Generador</p>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8 }}>AI Reels</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: 14 }}>Genera storyboards y conceptos visuales para tus Reels de Instagram.</p>
       </div>
 
-      <Card>
-        <div className="space-y-5">
+      <div className="card" style={{ padding: 28, marginBottom: 24 }}>
 
-          {/* Prompt */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-              ¿Qué reel quieres crear?
-            </label>
-            <textarea
-              className="input resize-none w-full"
-              rows={3}
-              placeholder="Ej: Modelo de moda caminando por las calles de París al atardecer, colores vibrantes, cámara lenta..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-            />
-          </div>
-
-          {/* Mood + Duración */}
-          <div className="grid grid-cols-2 gap-3">
-            <Select label="Estilo / Mood" options={MOODS} value={mood} onChange={setMood} />
-            <Select label="Duración" options={DURATIONS} value={duration} onChange={setDuration} />
-          </div>
-
-          {/* Imagen de referencia */}
-          <div>
-            <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-2">
-              Imagen de referencia (opcional) — para usar como primer frame
-            </label>
-            <div
-              className={cn(
-                'border-2 border-dashed rounded-xl p-3 flex items-center gap-3 cursor-pointer transition-colors',
-                refImage
-                  ? 'border-pink-300 dark:border-pink-700 bg-pink-50 dark:bg-pink-900/20'
-                  : 'border-slate-200 dark:border-slate-700 hover:border-pink-300 dark:hover:border-pink-700'
-              )}
-              onClick={() => fileRef.current?.click()}
-            >
-              {refImage ? (
-                <>
-                  <img src={refImage} alt="Ref" className="w-14 h-14 rounded-lg object-cover" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-pink-600 dark:text-pink-400">Imagen de referencia lista</p>
-                    <p className="text-xs text-slate-400">Se usará como frame inicial del video</p>
-                  </div>
-                  <button onClick={(e) => { e.stopPropagation(); setRefImage(null) }} className="text-slate-400 hover:text-red-400">
-                    <X className="w-4 h-4" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-                    <ImageIcon className="w-5 h-5 text-slate-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Sube imagen de referencia</p>
-                    <p className="text-xs text-slate-400">JPG, PNG — opcional</p>
-                  </div>
-                </>
-              )}
-            </div>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleRefImage} />
-          </div>
-
-          {/* Botones de acción */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="secondary"
-              onClick={generatePreview}
-              disabled={loading || !prompt.trim()}
-              className="justify-center"
-            >
-              <Sparkles className="w-4 h-4" />
-              Ver storyboard gratis
-            </Button>
-            <Button
-              onClick={generateVideo}
-              disabled={loading || !prompt.trim()}
-              className="justify-center"
-            >
-              {loading
-                ? <><Spinner size="sm" /> {progress}</>
-                : <><Wand2 className="w-4 h-4" /> Generar video</>
-              }
-            </Button>
-          </div>
-
-          <p className="text-xs text-slate-400 text-center">
-            El storyboard es gratuito e instantáneo • El video requiere API key de RunwayML o Higgsfield
-          </p>
+        {/* Prompt */}
+        <div style={{ marginBottom: 20 }}>
+          <label className="label">Describe tu reel *</label>
+          <textarea className="input" rows={3} style={{ resize: 'none' }}
+            placeholder="Ej: Modelo de moda caminando por las calles de París al atardecer, colores vibrantes, cámara lenta..."
+            value={prompt} onChange={e => setPrompt(e.target.value)} />
         </div>
-      </Card>
 
-      {/* Storyboard preview */}
-      {previewImages.length > 0 && (
-        <Card>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-indigo-500" />
-              Storyboard — previsualización de tu reel
-            </h3>
-            <button onClick={generatePreview} className="flex items-center gap-1 text-xs text-indigo-500 hover:text-indigo-700">
-              <RefreshCw className="w-3.5 h-3.5" /> Regenerar
+        {/* Mood */}
+        <div style={{ marginBottom: 20 }}>
+          <label className="label">Estilo / Mood</label>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {MOODS.map(m => (
+              <button key={m.v} onClick={() => setMood(m.v)}
+                className={`tag ${mood === m.v ? 'active' : ''}`}
+                style={{ padding: '8px 16px', fontSize: 13 }}>
+                {m.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Reference image */}
+        <div style={{ marginBottom: 24 }}>
+          <label className="label">Imagen de referencia (opcional)</label>
+          <div onClick={() => fileRef.current?.click()}
+            style={{ border: `1.5px dashed ${refImage ? 'var(--accent)' : 'var(--border)'}`, borderRadius: 12, padding: '20px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', transition: 'all 0.2s', background: refImage ? 'var(--accent-glow)' : 'var(--bg-card)' }}>
+            {refImage ? (
+              <>
+                <img src={refImage} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent-h)' }}>Imagen de referencia cargada</p>
+                  <p style={{ fontSize: 12, color: 'var(--text-2)' }}>Se usará como primer frame del reel</p>
+                </div>
+                <button onClick={e => { e.stopPropagation(); setRefImage(null) }} style={{ padding: 4, border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-2)' }}><X size={16} /></button>
+              </>
+            ) : (
+              <>
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <ImageIcon size={18} style={{ color: 'var(--text-3)' }} />
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--text-2)' }}>Sube imagen de referencia (opcional)</p>
+              </>
+            )}
+          </div>
+          <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => { const f = e.target.files[0]; if (f) { const r = new FileReader(); r.onload = ev => setRefImage(ev.target.result); r.readAsDataURL(f) } }} />
+        </div>
+
+        <button className="btn-primary" onClick={generate} disabled={loading} style={{ width: '100%', justifyContent: 'center', padding: '13px 24px', fontSize: 15, borderRadius: 12 }}>
+          {loading ? <><div className="spinner spinner-sm" /> Generando storyboard...</> : <><Sparkles size={18} /> Generar storyboard gratis</>}
+        </button>
+      </div>
+
+      {/* Storyboard */}
+      {storyboard.length > 0 && (
+        <div className="card" style={{ padding: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700 }}>Storyboard de tu reel</h3>
+            <button onClick={generate} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: '1px solid var(--border)', background: 'transparent', color: 'var(--text-2)', cursor: 'pointer', fontSize: 13 }}>
+              <Wand2 size={14} /> Regenerar
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {previewImages.map((url, i) => (
-              <div key={i} className="relative rounded-lg overflow-hidden aspect-video bg-slate-100 dark:bg-slate-900">
-                <img src={url} alt={`Frame ${i + 1}`} className="w-full h-full object-cover" loading="lazy"
-                  onError={(e) => { e.target.src = `https://placehold.co/300x169/6366f1/white?text=Frame+${i+1}` }} />
-                <div className="absolute bottom-1 left-1 bg-black/60 text-white text-[9px] px-1.5 py-0.5 rounded-full font-medium">
-                  {i === 0 ? 'Inicio' : i === 3 ? 'Final' : `Frame ${i + 1}`}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+            {storyboard.map((f, i) => (
+              <div key={i} style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', position: 'relative' }}>
+                <div style={{ aspectRatio: '16/9', background: 'var(--bg-card)', position: 'relative', overflow: 'hidden' }}>
+                  <img src={f.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { e.target.style.opacity = 0 }} />
+                </div>
+                <div style={{ padding: '8px 10px', borderTop: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-2)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{f.label}</p>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-400 mt-2">
-            Usa "Generar video" con tu API key para crear el MP4 real de {duration} segundos
+          <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 16, textAlign: 'center' }}>
+            El storyboard es gratis · Para generar el MP4 real usa RunwayML o Higgsfield AI
           </p>
-        </Card>
+        </div>
       )}
 
-      {/* Video resultado */}
-      {videoUrl && (
-        <Card>
-          <h3 className="font-semibold text-slate-900 dark:text-white mb-3">¡Tu reel está listo!</h3>
-          <div className="rounded-xl overflow-hidden bg-black mb-4 aspect-video">
-            <video src={videoUrl} controls className="w-full h-full" autoPlay loop />
-          </div>
-          <Button onClick={downloadVideo} className="w-full justify-center" size="lg">
-            <Download className="w-4 h-4" /> Descargar MP4
-          </Button>
-        </Card>
-      )}
-
-      {/* Proveedores de video */}
-      <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-        <button
-          onClick={() => setShowProviders(!showProviders)}
-          className="w-full flex items-center justify-between px-5 py-4 text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-green-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
-            <span className="font-medium text-slate-700 dark:text-slate-300">
-              {apiKey ? `${provider === 'runway' ? 'RunwayML' : 'Higgsfield'} configurado` : 'Configurar proveedor de video'}
-            </span>
-          </div>
-          {showProviders ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-        </button>
-        {showProviders && (
-          <div className="px-5 pb-5 border-t border-slate-100 dark:border-slate-700 pt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {PROVIDERS.map(p => (
-                <button
-                  key={p.value}
-                  onClick={() => setProvider(p.value)}
-                  className={cn(
-                    'p-3 rounded-xl border-2 text-left transition-all',
-                    provider === p.value
-                      ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
-                  )}
-                >
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">{p.label}</p>
-                  <p className="text-xs text-slate-400">{p.desc}</p>
-                </button>
-              ))}
-            </div>
-            {PROVIDERS.map(p => provider === p.value && (
-              <div key={p.value}>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="text-xs font-medium text-slate-600 dark:text-slate-400">API Key de {p.label}</label>
-                  <a href={p.link} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-500 hover:underline">
-                    Obtener key →
-                  </a>
-                </div>
-                <input
-                  type="password"
-                  className="input"
-                  placeholder={p.ph}
-                  value={inlineKeys[p.value] || ''}
-                  onChange={(e) => setKey(p.value, e.target.value)}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Video providers info */}
+      <div className="card" style={{ padding: 24, marginTop: 24 }}>
+        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Generar video real (MP4)</h3>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7, marginBottom: 16 }}>
+          Para generar el video MP4 final, conecta con un proveedor de video IA. Obtén tu API key gratis en:
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {[
+            { name: 'RunwayML Gen-3', desc: 'Mejor calidad general', link: 'https://app.runwayml.com' },
+            { name: 'Higgsfield AI', desc: 'Movimiento de personajes', link: 'https://app.higgsfield.ai' },
+          ].map(p => (
+            <a key={p.name} href={p.link} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'block', padding: '16px 20px', borderRadius: 12, border: '1px solid var(--border)', textDecoration: 'none', transition: 'all 0.2s', background: 'var(--bg-card)' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+              <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{p.name}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-2)' }}>{p.desc}</p>
+              <p style={{ fontSize: 12, color: 'var(--accent)', marginTop: 8 }}>Obtener API key →</p>
+            </a>
+          ))}
+        </div>
       </div>
-
     </div>
   )
 }

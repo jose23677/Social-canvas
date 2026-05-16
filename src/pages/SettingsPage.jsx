@@ -1,130 +1,113 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Settings, Save, Moon, Sun, Globe } from 'lucide-react'
+import { Moon, Sun, Globe, Save, User, Palette } from 'lucide-react'
 import { useStore } from '../store/useStore'
-import { Button, Input, Card } from '../components/UI'
 import toast from 'react-hot-toast'
 import i18n from '../i18n'
 
+const LANGS = [{ v: 'es', label: '🇪🇸 Español' }, { v: 'en', label: '🇺🇸 English' }]
+
 export default function SettingsPage() {
-  const { t } = useTranslation()
-  const { darkMode, toggleDarkMode, language, setLanguage } = useStore()
-  const [supabase, setSupabase] = useState({
-    supabase_url: localStorage.getItem('supabase_url') || '',
-    supabase_key: localStorage.getItem('supabase_key') || '',
+  const { darkMode, toggleDarkMode, language, setLanguage, user } = useStore()
+  const [brand, setBrand] = useState({
+    name: localStorage.getItem('brand_name') || '',
+    handle: localStorage.getItem('brand_handle') || '',
+    specialty: localStorage.getItem('brand_specialty') || '',
   })
 
-  const saveSettings = () => {
-    localStorage.setItem('supabase_url', supabase.supabase_url)
-    localStorage.setItem('supabase_key', supabase.supabase_key)
-    toast.success('Configuración guardada ✓')
+  const save = () => {
+    Object.entries(brand).forEach(([k, v]) => localStorage.setItem(`brand_${k}`, v))
+    toast.success('Configuración guardada')
   }
 
-  const toggleLang = () => {
-    const next = language === 'es' ? 'en' : 'es'
-    setLanguage(next)
-    i18n.changeLanguage(next)
-    localStorage.setItem('lang', next)
-  }
+  const toggleLang = (v) => { setLanguage(v); i18n.changeLanguage(v); localStorage.setItem('lang', v) }
 
   return (
-    <div className="max-w-xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-white" />
-        </div>
-        {t('settings.title')}
-      </h1>
+    <div style={{ maxWidth: 560, margin: '0 auto', padding: '48px 24px' }}>
 
-      {/* Apariencia */}
-      <Card>
-        <h2 className="font-semibold text-slate-900 dark:text-white mb-4">{t('settings.appearance')}</h2>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {darkMode ? <Moon className="w-4 h-4 text-slate-500" /> : <Sun className="w-4 h-4 text-slate-500" />}
-              <div>
-                <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('settings.darkMode')}</p>
-              </div>
-            </div>
-            <button
-              onClick={toggleDarkMode}
-              className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${darkMode ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'}`}
-            >
-              <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${darkMode ? 'translate-x-5' : ''}`} />
-            </button>
+      <div style={{ marginBottom: 40 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 8 }}>Configuración</h1>
+        <p style={{ color: 'var(--text-2)', fontSize: 14 }}>Personaliza tu experiencia y datos de marca.</p>
+      </div>
+
+      {/* Appearance */}
+      <Section title="Apariencia" icon={Palette}>
+        <Row label="Tema" desc={darkMode ? 'Modo oscuro activo' : 'Modo claro activo'}>
+          <button onClick={toggleDarkMode} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-2)', cursor: 'pointer', fontSize: 13, transition: 'all 0.2s' }}>
+            {darkMode ? <Sun size={15} /> : <Moon size={15} />}
+            {darkMode ? 'Modo claro' : 'Modo oscuro'}
+          </button>
+        </Row>
+        <Row label="Idioma" desc="Idioma de la interfaz">
+          <div style={{ display: 'flex', gap: 8 }}>
+            {LANGS.map(l => (
+              <button key={l.v} onClick={() => toggleLang(l.v)}
+                style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s', border: `1px solid ${language === l.v ? 'var(--accent)' : 'var(--border)'}`, background: language === l.v ? 'var(--accent-glow)' : 'var(--bg-card)', color: language === l.v ? 'var(--accent-h)' : 'var(--text-2)', fontWeight: language === l.v ? 600 : 400 }}>
+                {l.label}
+              </button>
+            ))}
           </div>
+        </Row>
+      </Section>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Globe className="w-4 h-4 text-slate-500" />
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{t('settings.language')}</p>
-            </div>
-            <button
-              onClick={toggleLang}
-              className="px-4 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-            >
-              {language === 'es' ? '🇪🇸 Español' : '🇺🇸 English'}
-            </button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Supabase */}
-      <Card>
-        <h2 className="font-semibold text-slate-900 dark:text-white mb-1">Supabase — Auth y proyectos</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
-          Necesario para guardar proyectos y sincronizar tu cuenta.{' '}
-          <a href="https://supabase.com" target="_blank" rel="noopener noreferrer" className="text-indigo-500 hover:underline">
-            Crear cuenta gratis →
-          </a>
+      {/* Brand */}
+      <Section title="Tu marca" icon={User}>
+        <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20, lineHeight: 1.6 }}>
+          Estos datos se aplican automáticamente en tus carruseles generados.
         </p>
-        <div className="space-y-3">
-          <Input
-            label="Project URL"
-            type="text"
-            value={supabase.supabase_url}
-            onChange={(e) => setSupabase((s) => ({ ...s, supabase_url: e.target.value }))}
-            placeholder="https://xxxx.supabase.co"
-          />
-          <Input
-            label="Anon Key"
-            type="password"
-            value={supabase.supabase_key}
-            onChange={(e) => setSupabase((s) => ({ ...s, supabase_key: e.target.value }))}
-            placeholder="eyJ..."
-          />
-        </div>
+        {[
+          { k: 'name', label: 'Nombre / Clínica', ph: 'Dr. José Colmenarez' },
+          { k: 'handle', label: 'Instagram', ph: '@drcolmenarez' },
+          { k: 'specialty', label: 'Especialidad', ph: 'Medicina Estética' },
+        ].map(({ k, label, ph }) => (
+          <div key={k} style={{ marginBottom: 16 }}>
+            <label className="label">{label}</label>
+            <input className="input" value={brand[k]} placeholder={ph}
+              onChange={e => setBrand(s => ({ ...s, [k]: e.target.value }))} />
+          </div>
+        ))}
+        <button className="btn-primary" onClick={save} style={{ marginTop: 8 }}>
+          <Save size={15} /> Guardar
+        </button>
+      </Section>
 
-        <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
-          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-2">SQL para ejecutar en Supabase → SQL Editor:</p>
-          <pre className="text-[10px] text-green-600 dark:text-green-400 overflow-x-auto whitespace-pre">{`create table if not exists api_keys (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  name text not null, key text not null unique,
-  created_at timestamptz default now(),
-  last_used_at timestamptz
-);
-alter table api_keys enable row level security;
-create policy "own keys" on api_keys using (auth.uid() = user_id);
+      {/* Account */}
+      {user && (
+        <Section title="Cuenta" icon={User}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-glow)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--accent-h)' }}>
+              {(user.user_metadata?.name || user.email || 'U')[0].toUpperCase()}
+            </div>
+            <div>
+              <p style={{ fontSize: 14, fontWeight: 600 }}>{user.user_metadata?.name || 'Usuario'}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-2)' }}>{user.email}</p>
+            </div>
+          </div>
+        </Section>
+      )}
+    </div>
+  )
+}
 
-create table if not exists projects (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users not null,
-  title text default 'Untitled', canvas_json jsonb,
-  slides jsonb, format text default 'square',
-  thumbnail text, created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
-alter table projects enable row level security;
-create policy "own projects" on projects using (auth.uid() = user_id);`}</pre>
-        </div>
-      </Card>
+function Section({ title, icon: Icon, children }) {
+  return (
+    <div style={{ marginBottom: 36 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <Icon size={16} style={{ color: 'var(--accent)' }} />
+        <h2 style={{ fontSize: 15, fontWeight: 700 }}>{title}</h2>
+      </div>
+      <div className="card" style={{ padding: 24 }}>{children}</div>
+    </div>
+  )
+}
 
-      <Button onClick={saveSettings} className="w-full justify-center" size="lg">
-        <Save className="w-4 h-4" />
-        Guardar configuración
-      </Button>
+function Row({ label, desc, children }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid var(--border)' }}>
+      <div>
+        <p style={{ fontSize: 14, fontWeight: 500 }}>{label}</p>
+        {desc && <p style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>{desc}</p>}
+      </div>
+      {children}
     </div>
   )
 }
