@@ -472,6 +472,45 @@ export default function ContentStudioPage() {
                     </div>
                   )}
 
+                  {/* ── Groq key — visible siempre que esté seleccionado ── */}
+                  {textProvider === 'groq' && (
+                    <div className="rounded-xl border-2 p-4 space-y-2" style={{ borderColor: textKey ? `${pal.accent}60` : '#FCD34D', background: textKey ? `${pal.accent}08` : '#FFFBEB' }}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-widest" style={{ color: textKey ? pal.accent : '#92400E' }}>
+                            {textKey ? '✓ Groq configurado' : '🦙 API Key de Groq (gratis)'}
+                          </p>
+                          {!textKey && (
+                            <p className="text-xs mt-0.5" style={{ color: '#92400E' }}>
+                              1. Ve a <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="underline font-medium">console.groq.com/keys</a> → crea cuenta gratis → copia tu key
+                            </p>
+                          )}
+                        </div>
+                        {textKey && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: `${pal.accent}20`, color: pal.accent }}>Listo</span>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type={showTextKey ? 'text' : 'password'}
+                          value={textKey}
+                          onChange={e => setTextKey(e.target.value)}
+                          placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxx"
+                          className="w-full px-3 py-2.5 pr-10 rounded-lg text-sm focus:outline-none"
+                          style={{ background: palette.isDark ? pal.bg : '#FFFFFF', border: `1.5px solid ${textKey ? pal.accent : '#FCD34D'}`, color: palette.isDark ? pal.white : '#2A2520' }}
+                        />
+                        <button onClick={() => setShowTextKey(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: '#92400E' }}>
+                          {showTextKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {!textKey && (
+                        <p className="text-[11px]" style={{ color: '#B45309' }}>
+                          2. Pega aquí tu key que empieza con <code className="bg-yellow-100 px-1 rounded">gsk_</code> — se guarda solo en tu navegador
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {/* Extra info */}
                   <div>
                     <p className="text-xs font-medium uppercase tracking-widest mb-2" style={labelStyle}>Información adicional (opcional)</p>
