@@ -32,7 +32,7 @@ export default function SettingsPage() {
       {/* Appearance */}
       <Section title="Apariencia" icon={Palette}>
         <Row label="Tema" desc={darkMode ? 'Modo oscuro activo' : 'Modo claro activo'}>
-          <button onClick={toggleDarkMode} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-2)', cursor: 'pointer', fontSize: 13, transition: 'all 0.2s' }}>
+          <button onClick={toggleDarkMode} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-2)', cursor: 'pointer', fontSize: 13, transition: 'all 0.2s' }}>
             {darkMode ? <Sun size={15} /> : <Moon size={15} />}
             {darkMode ? 'Modo claro' : 'Modo oscuro'}
           </button>
@@ -41,7 +41,7 @@ export default function SettingsPage() {
           <div style={{ display: 'flex', gap: 8 }}>
             {LANGS.map(l => (
               <button key={l.v} onClick={() => toggleLang(l.v)}
-                style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s', border: `1px solid ${language === l.v ? 'var(--accent)' : 'var(--border)'}`, background: language === l.v ? 'var(--accent-glow)' : 'var(--bg-card)', color: language === l.v ? 'var(--accent-h)' : 'var(--text-2)', fontWeight: language === l.v ? 600 : 400 }}>
+                style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s', border: `1px solid ${language === l.v ? 'var(--accent)' : 'var(--border)'}`, background: language === l.v ? 'var(--accent-deep)' : 'var(--surface)', color: language === l.v ? 'var(--accent)' : 'var(--text-2)', fontWeight: language === l.v ? 600 : 400 }}>
                 {l.label}
               </button>
             ))}
@@ -73,8 +73,8 @@ export default function SettingsPage() {
       {/* Account */}
       {user && (
         <Section title="Cuenta" icon={User}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--bg-card)' }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-glow)', border: '1px solid rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--accent-h)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px', borderRadius: 12, border: '1px solid var(--border)', background: 'var(--surface)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--accent-deep)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700, color: 'var(--accent)' }}>
               {(user.user_metadata?.name || user.email || 'U')[0].toUpperCase()}
             </div>
             <div>

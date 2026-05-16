@@ -4,12 +4,13 @@ import { persist } from 'zustand/middleware'
 export const useStore = create(
   persist(
     (set, get) => ({
-      // Theme
-      darkMode: false,
+      // Theme — default dark (platform designed for dark mode)
+      darkMode: true,
       toggleDarkMode: () => {
         const next = !get().darkMode
         set({ darkMode: next })
         document.documentElement.classList.toggle('dark', next)
+        document.documentElement.classList.toggle('light', !next)
       },
 
       // Language

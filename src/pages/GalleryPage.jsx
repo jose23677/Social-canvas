@@ -63,31 +63,31 @@ export default function GalleryPage() {
           <p className="label" style={{ marginBottom: 8 }}>Tus creaciones</p>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: '-0.02em' }}>Galería</h1>
         </div>
-        <Link to="/studio" className="btn-primary">
+        <Link to="/studio" className="btn btn-primary">
           <Plus size={16} /> Nueva creación
         </Link>
       </div>
 
       {!user && (
-        <div style={{ padding: '14px 20px', borderRadius: 12, border: '1px solid rgba(99,102,241,0.3)', background: 'var(--accent-glow)', marginBottom: 32, fontSize: 14, color: 'var(--text-2)' }}>
+        <div style={{ padding: '14px 20px', borderRadius: 12, border: '1px solid var(--accent-border)', background: 'var(--accent-deep)', marginBottom: 32, fontSize: 14, color: 'var(--text-2)' }}>
           <Link to="/auth" style={{ color: 'var(--accent-h)', fontWeight: 600 }}>Inicia sesión</Link> para sincronizar tus proyectos en la nube.
         </div>
       )}
 
       {projects.length === 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 24px', textAlign: 'center' }}>
-          <div style={{ width: 64, height: 64, borderRadius: 18, background: 'var(--bg-card)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
             <LayoutGrid size={28} style={{ color: 'var(--text-3)' }} />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Aún no tienes creaciones</h3>
           <p style={{ color: 'var(--text-2)', fontSize: 14, marginBottom: 24 }}>Crea tu primer carrusel con IA</p>
-          <Link to="/studio" className="btn-primary">Crear ahora</Link>
+          <Link to="/studio" className="btn btn-primary">Crear ahora</Link>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
           {projects.map((p) => (
             <div key={p.id} className="card" style={{ overflow: 'hidden', cursor: 'pointer' }}>
-              <div style={{ aspectRatio: '1', background: 'var(--bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}
+              <div style={{ aspectRatio: '1', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}
                 onClick={() => openProject(p)}>
                 {p.thumbnail
                   ? <img src={p.thumbnail} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

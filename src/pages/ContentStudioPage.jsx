@@ -197,7 +197,7 @@ export default function ContentStudioPage() {
         setStatus(imageProvider === 'midjourney' ? `Midjourney: imagen ${i + 1}/${aiSlides.length}` : `Flux: imagen ${i + 1}/${aiSlides.length}`)
         setProgress(Math.round((i / aiSlides.length) * 100))
         const imageUrl = await getImageUrl(s.imagePrompt || s.elements?.label || topic, s.imageStyle)
-        results.push({ ...s, elements: resolveCopy(s.elements), imageUrl, palette: pal_, isDark: s.isDark || palette.isDark, brandLogo: palette.isDark ? palette.logo : palette.logoLight })
+        results.push({ ...s, elements: resolveCopy(s.elements), imageUrl, palette: pal_, isDark: s.isDark || palette.isDark, brandLogo: null })
         await new Promise(r => setTimeout(r, 100))
       }
 
@@ -226,7 +226,7 @@ export default function ContentStudioPage() {
       setStatus(`Generando slide ${i + 1}/${tSlides.length}`)
       setProgress(Math.round((i / tSlides.length) * 100))
       const imageUrl = generatePollinationsUrl(s.imagePrompt || 'premium medical aesthetic', s.imageStyle || 'luxury', 820, 1024, 'flux')
-      results.push({ ...s, elements: resolveCopy(s.elements), imageUrl, palette: pal_, isDark: s.isDark || palette.isDark, brandLogo: palette.isDark ? palette.logo : palette.logoLight })
+      results.push({ ...s, elements: resolveCopy(s.elements), imageUrl, palette: pal_, isDark: s.isDark || palette.isDark, brandLogo: null })
       await new Promise(r => setTimeout(r, 200))
     }
 
@@ -263,8 +263,13 @@ export default function ContentStudioPage() {
           <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full blur-3xl opacity-20" style={{ background: pal.accent }} />
         </div>
         <div className="relative max-w-4xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center gap-8">
-          <div className="shrink-0 w-24 h-24 rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: `${pal.accent}40` }}>
-            
+          <div className="shrink-0 w-20 h-20 rounded-2xl flex items-center justify-center shadow-2xl border" style={{ borderColor: `${pal.accent}40`, background: `${pal.accent}10` }}>
+            <svg width="44" height="44" viewBox="0 0 40 40" fill="none">
+              <circle cx="20" cy="20" r="3.5" fill={pal.accent}/>
+              <circle cx="20" cy="20" r="8" fill="none" stroke={pal.accent} strokeWidth="1.2" opacity="0.65"/>
+              <circle cx="20" cy="20" r="13.5" fill="none" stroke={pal.accent} strokeWidth="0.8" opacity="0.35"/>
+              <circle cx="20" cy="20" r="18.5" fill="none" stroke={pal.accent} strokeWidth="0.5" opacity="0.16"/>
+            </svg>
           </div>
           <div className="text-center md:text-left flex-1">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `${pal.accent}20`, border: `1px solid ${pal.accent}40`, color: palette.isDark ? pal.accent : '#8C6B4A' }}>
@@ -684,14 +689,20 @@ export default function ContentStudioPage() {
               </div>
             </div>
 
-            {/* Logo preview */}
-            { (
-              <div className="p-4 rounded-2xl flex items-center gap-4 border" style={{ borderColor: `${pal.accent}30`, background: palette.isDark ? pal.bg : '#FDFAF7' }}>
-                <img src={palette.isDark ? palette.logo : (palette.logoLight || palette.logo)} alt="" className="h-14 w-14 object-contain rounded-xl" />
+            {/* Brand preview — show only when brand has data */}
+            {(brand.doctor || brand.handle || brand.specialty) && (
+              <div style={{ padding: '14px 18px', borderRadius: 16, display: 'flex', alignItems: 'center', gap: 14, border: `1px solid ${pal.accent}30`, background: palette.isDark ? pal.bg2 : '#FDFAF7' }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: `${pal.accent}18`, border: `1px solid ${pal.accent}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="22" height="22" viewBox="0 0 40 40" fill="none">
+                    <circle cx="20" cy="20" r="3.5" fill={pal.accent}/>
+                    <circle cx="20" cy="20" r="8" fill="none" stroke={pal.accent} strokeWidth="1.3" opacity="0.6"/>
+                    <circle cx="20" cy="20" r="13.5" fill="none" stroke={pal.accent} strokeWidth="0.9" opacity="0.3"/>
+                  </svg>
+                </div>
                 <div>
-                  <p className="font-semibold text-sm" style={{ fontFamily: 'Cormorant Garamond, serif', ...textColor }}>{brand.doctor}</p>
-                  <p className="text-xs" style={{ color: pal.accent }}>{brand.specialty}</p>
-                  <p className="text-xs mt-0.5" style={{ color: `${pal.accent}70` }}>{brand.handle}</p>
+                  {brand.doctor && <p style={{ fontSize: 14, fontWeight: 700, color: palette.isDark ? pal.white : '#2A2520' }}>{brand.doctor}</p>}
+                  {brand.specialty && <p style={{ fontSize: 12, color: pal.accent, marginTop: 1 }}>{brand.specialty}</p>}
+                  {brand.handle && <p style={{ fontSize: 12, color: `${pal.accent}70`, marginTop: 1 }}>{brand.handle}</p>}
                 </div>
               </div>
             )}
@@ -860,7 +871,7 @@ function SlideCard({ slide, index, palette, onClick }) {
         </div>
         <div className="flex items-end justify-between mt-2">
           <div className="w-6 h-px" style={{ background: pal.accent }} />
-          { index === 9 && <img src={palette.logo} alt="" className="h-5 w-5 object-contain opacity-80 rounded" />}
+          {false && null /* logo removed — no brand logo in generic mode */}
         </div>
       </div>
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>

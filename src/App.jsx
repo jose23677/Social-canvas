@@ -30,8 +30,9 @@ export default function App() {
 
   const isApp = APP_ROUTES.some(r => location.pathname.startsWith(r))
 
-  // Sync dark mode / light mode class
+  // Sync dark / light class — both for Tailwind (dark:) and CSS vars (.light)
   useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
     document.documentElement.classList.toggle('light', !darkMode)
   }, [darkMode])
 
