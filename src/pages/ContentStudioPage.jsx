@@ -36,10 +36,10 @@ const TONES = [
 ]
 
 const AI_TEXT_PROVIDERS = [
-  { value: 'pollinations', label: '⚡ Pollinations AI (gratis, sin key)', keyPlaceholder: null, link: null },
-  { value: 'groq',         label: '🦙 Groq — Llama 3.3 (gratis con key)', keyPlaceholder: 'gsk_...', link: 'https://console.groq.com/keys' },
-  { value: 'claude',       label: '🧠 Claude Haiku (Anthropic)',           keyPlaceholder: 'sk-ant-...', link: 'https://console.anthropic.com' },
-  { value: 'openai',       label: '💡 GPT-4o Mini (OpenAI)',               keyPlaceholder: 'sk-...', link: 'https://platform.openai.com/api-keys' },
+  { value: 'groq',         label: '🦙 Groq — Llama 3.3 ✦ Recomendado (gratis)', keyPlaceholder: 'gsk_...', link: 'https://console.groq.com/keys' },
+  { value: 'pollinations', label: '⚡ Pollinations (sin key, puede fallar)',       keyPlaceholder: null,      link: null },
+  { value: 'claude',       label: '🧠 Claude Haiku (Anthropic)',                   keyPlaceholder: 'sk-ant-...', link: 'https://console.anthropic.com' },
+  { value: 'openai',       label: '💡 GPT-4o Mini (OpenAI)',                       keyPlaceholder: 'sk-...', link: 'https://platform.openai.com/api-keys' },
 ]
 
 const INPUT_TYPES = [
@@ -73,7 +73,7 @@ export default function ContentStudioPage() {
   const [aiTone, setAiTone] = useState('educational')
 
   // AI providers
-  const [textProvider, setTextProvider] = useState('pollinations')
+  const [textProvider, setTextProvider] = useState('groq')
   const [textKey, setTextKey] = useState('')
   const [showTextKey, setShowTextKey] = useState(false)
   const [imageProvider, setImageProvider] = useState('flux')
@@ -543,6 +543,11 @@ export default function ContentStudioPage() {
                           style={{ background: palette.isDark ? pal.bg : '#F7F3EE', border: `1px solid ${pal.accent}30`, color: palette.isDark ? pal.white : '#2A2520' }}>
                           {AI_TEXT_PROVIDERS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                         </select>
+                        {textProvider === 'pollinations' && (
+                          <div className="mb-2 px-3 py-2 rounded-lg text-xs" style={{ background: '#FEF3C7', color: '#92400E', border: '1px solid #FCD34D' }}>
+                            ⚠ Pollinations puede estar con problemas de servidor. Si falla, usa <strong>Groq</strong> (gratis en <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="underline">console.groq.com</a>).
+                          </div>
+                        )}
                         {textProvider !== 'pollinations' && (() => {
                           const prov = AI_TEXT_PROVIDERS.find(p => p.value === textProvider)
                           if (!prov) return null
@@ -643,6 +648,27 @@ export default function ContentStudioPage() {
             <h2 className="text-2xl font-semibold mb-2" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', ...textColor }}>
               {mode === 'ai' ? 'La IA construirá tu carrusel' : 'Todo listo para generar'}
             </h2>
+
+            {/* Groq recommendation banner */}
+            {mode === 'ai' && textProvider === 'groq' && !textKey && (
+              <div className="p-4 rounded-xl text-left" style={{ background: '#FFFBEB', border: '1px solid #FCD34D' }}>
+                <p className="text-sm font-semibold text-amber-800 mb-1">🦙 Configurar Groq (gratis, 1 minuto)</p>
+                <p className="text-xs text-amber-700 mb-2">Groq es gratis y mucho más estable que Pollinations. Necesitas una API key:</p>
+                <ol className="text-xs text-amber-700 space-y-1 list-decimal list-inside">
+                  <li>Ve a <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer" className="underline font-medium">console.groq.com/keys</a></li>
+                  <li>Crea cuenta gratis y genera una API key</li>
+                  <li>Pégala en <strong>Configuración avanzada → Motor de texto IA</strong></li>
+                </ol>
+                <button onClick={() => setStep('brand')} className="mt-3 text-xs font-medium underline text-amber-800">
+                  ← Volver a configurar
+                </button>
+              </div>
+            )}
+            {mode === 'ai' && textProvider === 'pollinations' && (
+              <div className="p-3 rounded-xl text-left text-xs" style={{ background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' }}>
+                ⚠ Pollinations puede estar inestable. Si falla, vuelve y usa <strong>Groq</strong> (gratis).
+              </div>
+            )}
 
             {/* Summary */}
             <div className="p-5 rounded-2xl border text-left space-y-2" style={{ borderColor: `${pal.accent}30`, background: palette.isDark ? pal.bg2 : '#FDFAF7' }}>

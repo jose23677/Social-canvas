@@ -91,33 +91,50 @@ INSTRUCCIONES ESPECÍFICAS:
 Genera el JSON completo ahora.`
 }
 
-// ── Call Pollinations Text (free) ─────────────────────────────────────────────
+// ── Call Pollinations Text (free, pero inestable) ────────────────────────────
 async function callPollinations(userMessage) {
-  const res = await fetch(POLLINATIONS_TEXT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'openai',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-      seed: Math.floor(Math.random() * 99999),
-      response_format: { type: 'json_object' },
-      private: true,
-    }),
-  })
-  if (!res.ok) {
-    const errText = await res.text().catch(() => '')
-    throw new Error(`Pollinations text: ${res.status} ${errText.slice(0, 100)}`)
+  // Try up to 2 times (Pollinations has intermittent 500 errors)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const res = await fetch(POLLINATIONS_TEXT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userMessage },
+        ],
+        seed: Math.floor(Math.random() * 99999),
+        response_format: { type: 'json_object' },
+        private: true,
+      }),
+    })
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      // 500 = server overload, retry once
+      if (res.status === 500 && attempt === 1) {
+        await new Promise(r => setTimeout(r, 3000))
+        continue
+      }
+      // Give user a helpful message
+      if (res.status >= 500) {
+        throw new Error(
+          'Pollinations tiene problemas de servidor ahora mismo. ' +
+          'Usa Groq (gratis) en Configuración avanzada: console.groq.com/keys'
+        )
+      }
+      throw new Error(`Pollinations: ${res.status} — ${errText.slice(0, 80)}`)
+    }
+
+    const data = await res.json()
+    const content = data?.choices?.[0]?.message?.content
+    if (!content) throw new Error('Pollinations no devolvió contenido')
+    const clean = content.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
+    return JSON.parse(clean)
   }
-  const data = await res.json()
-  // Response is OpenAI-compatible: choices[0].message.content
-  const content = data?.choices?.[0]?.message?.content
-  if (!content) throw new Error('Pollinations no devolvió contenido')
-  // Parse JSON from content (may have markdown fences)
-  const clean = content.replace(/^```(?:json)?\n?/i, '').replace(/\n?```$/i, '').trim()
-  return JSON.parse(clean)
+
+  throw new Error('Pollinations no disponible. Usa Groq (gratis) en Configuración avanzada.')
 }
 
 // ── Call Claude API ───────────────────────────────────────────────────────────
