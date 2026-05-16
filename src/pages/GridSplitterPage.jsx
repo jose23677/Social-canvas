@@ -468,11 +468,11 @@ function FeedPreview({ tiles, rows, cols }) {
       {/* Mock profile header */}
       <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#E8D5BE] dark:border-slate-700">
         <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#C4A882]">
-          <img src="/Social-canvas/logo-jmc-dark.png" alt="" className="w-full h-full object-cover"
+          <img src="/Social-canvas/aura-logo.svg" alt="" className="w-full h-full object-cover"
             onError={(e) => { e.target.style.display = 'none' }} />
         </div>
         <div>
-          <p className="text-xs font-bold text-[#2A2520] dark:text-white">@drcolmenarez</p>
+          <p className="text-xs font-bold text-[#2A2520] dark:text-white">@tuusuario</p>
           <p className="text-[10px] text-[#7A746E] dark:text-slate-400">Medicina Estética</p>
         </div>
       </div>

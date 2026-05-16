@@ -16,7 +16,7 @@ import toast from 'react-hot-toast'
 
 // ── Paletas ───────────────────────────────────────────────────────────────────
 export const PALETTES = [
-  { id: 'jmc-brand',      name: '✦ Dr. Colmenarez', desc: 'Petróleo · Champagne · Crema', brand: true, logo: '/Social-canvas/logo-jmc-dark.png', logoLight: '/Social-canvas/logo-jmc-crema.png', colors: { bg: '#0C2530', bg2: '#050B14', accent: '#C4AA80', text: '#F5F0E8', dark: '#020608', white: '#F5F0E8' }, preview: ['#0C2530','#050B14','#C4AA80','#F5F0E8'], isDark: true },
+  { id: 'dark-elegant', name: '◆ Dark Elegant', desc: 'Petróleo · Champagne · Crema', colors: { bg: '#0C2530', bg2: '#050B14', accent: '#C4AA80', text: '#F5F0E8', dark: '#020608', white: '#F5F0E8' }, preview: ['#0C2530','#050B14','#C4AA80','#F5F0E8'], isDark: true },
   { id: 'luxury-nude',    name: '◇ Luxury Nude',    desc: 'Champagne · Marfil · Dorado',   colors: { bg: '#F7F3EE', bg2: '#E8D5BE', accent: '#C4A882', text: '#2A2520', dark: '#1A1510', white: '#FFFFFF' }, preview: ['#F7F3EE','#E8D5BE','#C4A882','#2A2520'], isDark: false },
   { id: 'midnight-luxe',  name: '◈ Midnight Luxe',  desc: 'Obsidiana · Cobre · Crema',     colors: { bg: '#0A0806', bg2: '#1A1410', accent: '#C47840', text: '#F0E8D8', dark: '#050302', white: '#F0E8D8' }, preview: ['#0A0806','#1A1410','#C47840','#F0E8D8'], isDark: true },
   { id: 'mauve-luxe',     name: '◉ Mauve Luxe',     desc: 'Malva · Nude cálido · Champagne', colors: { bg: '#F5EEF0', bg2: '#E8D4DC', accent: '#9E6B7A', text: '#2A1820', dark: '#1A0C12', white: '#FFFFFF' }, preview: ['#F5EEF0','#E8D4DC','#9E6B7A','#2A1820'], isDark: false },
@@ -51,7 +51,7 @@ const INPUT_TYPES = [
   { value: 'pdf',      icon: FileText, label: 'PDF' },
 ]
 
-const JMC_DEFAULTS = { doctor: 'Dr. José Colmenarez', handle: '@drcolmenarez', whatsapp: '', specialty: 'Medicina Estética de Alto Nivel', style: 'jmc-brand' }
+const BRAND_DEFAULTS = { doctor: '', handle: '', whatsapp: '', specialty: '', style: 'luxury-nude' }
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function ContentStudioPage() {
@@ -85,7 +85,7 @@ export default function ContentStudioPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   // Brand
-  const [brand, setBrand] = useState(JMC_DEFAULTS)
+  const [brand, setBrand] = useState(BRAND_DEFAULTS)
 
   // Generation
   const [generating, setGenerating] = useState(false)
@@ -264,7 +264,7 @@ export default function ContentStudioPage() {
         </div>
         <div className="relative max-w-4xl mx-auto px-6 py-12 flex flex-col md:flex-row items-center gap-8">
           <div className="shrink-0 w-24 h-24 rounded-2xl overflow-hidden shadow-2xl border-2" style={{ borderColor: `${pal.accent}40` }}>
-            <img src={palette.isDark && step !== 'mode' ? '/Social-canvas/logo-jmc-dark.png' : '/Social-canvas/logo-jmc-light.png'} alt="Logo" className="w-full h-full object-cover" />
+            
           </div>
           <div className="text-center md:text-left flex-1">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium uppercase tracking-widest mb-4" style={{ background: `${pal.accent}20`, border: `1px solid ${pal.accent}40`, color: palette.isDark ? pal.accent : '#8C6B4A' }}>
@@ -648,8 +648,8 @@ export default function ContentStudioPage() {
               <div className="space-y-3">
                 <p className="text-xs font-medium uppercase tracking-widest" style={labelStyle}>Tu marca</p>
                 {[
-                  { k:'doctor', label:'Nombre / Clínica', ph:'Dr. José Colmenarez' },
-                  { k:'handle', label:'Instagram', ph:'@drcolmenarez' },
+                  { k:'doctor', label:'Nombre / Clínica', ph:'Ej: Clínica Premium' },
+                  { k:'handle', label:'Instagram', ph:'@tuusuario' },
                   { k:'whatsapp', label:'WhatsApp', ph:'+58 414 000 0000' },
                   { k:'specialty', label:'Especialidad', ph:'Medicina Estética' },
                 ].map(({ k, label, ph }) => (
@@ -685,7 +685,7 @@ export default function ContentStudioPage() {
             </div>
 
             {/* Logo preview */}
-            {palette.logo && (
+            { (
               <div className="p-4 rounded-2xl flex items-center gap-4 border" style={{ borderColor: `${pal.accent}30`, background: palette.isDark ? pal.bg : '#FDFAF7' }}>
                 <img src={palette.isDark ? palette.logo : (palette.logoLight || palette.logo)} alt="" className="h-14 w-14 object-contain rounded-xl" />
                 <div>
@@ -860,7 +860,7 @@ function SlideCard({ slide, index, palette, onClick }) {
         </div>
         <div className="flex items-end justify-between mt-2">
           <div className="w-6 h-px" style={{ background: pal.accent }} />
-          {palette.logo && index === 9 && <img src={palette.logo} alt="" className="h-5 w-5 object-contain opacity-80 rounded" />}
+          { index === 9 && <img src={palette.logo} alt="" className="h-5 w-5 object-contain opacity-80 rounded" />}
         </div>
       </div>
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.5)' }}>
@@ -1021,7 +1021,7 @@ function CopySheet({ slides, brand, palette, meta }) {
           <div className="p-5 rounded-2xl border" style={{ borderColor: `${pal.accent}40`, background: `linear-gradient(135deg, ${pal.bg}, ${pal.bg2})` }}>
             <p className="text-[10px] font-medium uppercase tracking-widest mb-3" style={{ color: pal.accent }}>Caption Instagram</p>
             <p id="studio-caption" className="text-sm whitespace-pre-line leading-relaxed" style={{ color: palette.isDark ? pal.text : '#2A2520' }}>
-              {meta?.caption || `¿Tienes dudas sobre este tema? 👇\n\nGuarda este carrusel y compártelo.\n\nAgenda tu valoración personalizada.\n👉 ${brand.handle || '@drcolmenarez'}\n\n${(meta?.hashtags || ['#MedicinaEstética','#SkincarePremium']).map(h => h.startsWith('#') ? h : '#'+h).join(' ')}`}
+              {meta?.caption || `¿Tienes dudas sobre este tema? 👇\n\nGuarda este carrusel y compártelo.\n\nAgenda tu valoración personalizada.\n👉 ${brand.handle || '@tuusuario'}\n\n${(meta?.hashtags || ['#MedicinaEstética','#SkincarePremium']).map(h => h.startsWith('#') ? h : '#'+h).join(' ')}`}
             </p>
             <button
               onClick={() => { const el = document.getElementById('studio-caption'); navigator.clipboard.writeText(el?.innerText || meta?.caption || ''); toast.success('Caption copiado ✓') }}

@@ -146,10 +146,10 @@ export function generateSmartCarousel({ topic, brand, tone }) {
   const cat = detectCategory(cleanedTopic)
   const data = CAT(cat)
   const topicShort = getTopicShort(cleanedTopic)
-  const doctor = brand?.doctor || 'Dr. Nombre'
-  const handle = brand?.handle || '@tuclínica'
+  const doctor = brand?.doctor || ''
+  const handle = brand?.handle || ''
   const whatsapp = brand?.whatsapp || ''
-  const specialty = brand?.specialty || 'Medicina Estética'
+  const specialty = brand?.specialty || ''
 
   const TONE_BODY = {
     educational:  (s) => `${s} Basado en evidencia clínica y años de experiencia médica.`,

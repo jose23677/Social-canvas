@@ -2,232 +2,237 @@ import { useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, useScroll, useTransform, useInView } from 'framer-motion'
 import {
-  Sparkles, ArrowRight, Zap, Layers, Image, LayoutGrid,
-  Video, Star, Check, ChevronRight, Wand2, Palette, Globe,
+  ArrowRight, Sparkles, Layers, LayoutGrid, Video,
+  Wand2, Palette, Globe, Star, Check, Zap,
+  Image as ImageIcon, ChevronRight, Command,
 } from 'lucide-react'
 
-// ── Animation variants ────────────────────────────────────────────────────────
-const fadeUp = { hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.16, 1, 0.3, 1] } } }
-const fadeIn  = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { duration: 0.5 } } }
-const stagger = { show: { transition: { staggerChildren: 0.1 } } }
-const staggerFast = { show: { transition: { staggerChildren: 0.07 } } }
-const scaleIn = { hidden: { opacity: 0, scale: 0.92 }, show: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } } }
+/* ── Animation helpers ─────────────────────────────── */
+const spring  = { type: 'spring', stiffness: 80, damping: 20 }
+const easeOut = { ease: [0.16, 1, 0.3, 1] }
 
-function Section({ children, className = '' }) {
+function FadeUp({ children, delay = 0, className = '' }) {
   const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-80px' })
+  const inView = useInView(ref, { once: true, margin: '-60px' })
   return (
-    <motion.div ref={ref} variants={stagger} initial="hidden" animate={inView ? 'show' : 'hidden'} className={className}>
+    <motion.div ref={ref} className={className}
+      initial={{ opacity: 0, y: 28 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.7, delay, ...easeOut }}>
       {children}
     </motion.div>
   )
 }
 
-// ── Mock carousel slides ──────────────────────────────────────────────────────
-const MOCK_SLIDES = [
-  {
-    bg: 'linear-gradient(145deg, #0c1428 0%, #111827 100%)',
-    accent: '#818cf8',
-    label: 'MEDICINA ESTÉTICA',
-    title: ['Resultados', 'que inspiran'],
-    sub: 'Tratamientos de precisión',
-    img: 'https://image.pollinations.ai/prompt/elegant%20woman%20glowing%20skin%20luxury%20editorial%20champagne?model=flux&width=300&height=380&seed=101&nologo=true',
-  },
-  {
-    bg: 'linear-gradient(145deg, #0d1117 0%, #1a0a2e 100%)',
-    accent: '#c084fc',
-    label: 'SKINCARE PREMIUM',
-    title: ['Tu piel,', 'transformada'],
-    sub: 'Rutina de alto rendimiento',
-    img: 'https://image.pollinations.ai/prompt/luxury%20skincare%20products%20minimal%20studio%20premium%20editorial?model=flux&width=300&height=380&seed=102&nologo=true',
-  },
-  {
-    bg: 'linear-gradient(145deg, #0a1a0a 0%, #0f2010 100%)',
-    accent: '#34d399',
-    label: 'WELLNESS & VIDA',
-    title: ['Bienestar', 'sin límites'],
-    sub: 'Contenido que convierte',
-    img: 'https://image.pollinations.ai/prompt/woman%20wellness%20lifestyle%20natural%20light%20editorial%20premium?model=flux&width=300&height=380&seed=103&nologo=true',
-  },
+function Stagger({ children, className = '', delay = 0 }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-40px' })
+  return (
+    <motion.div ref={ref} className={className}
+      initial="hidden" animate={inView ? 'show' : 'hidden'}
+      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: delay } } }}>
+      {children}
+    </motion.div>
+  )
+}
+
+const cardVariant = {
+  hidden: { opacity: 0, y: 20 },
+  show:   { opacity: 1, y: 0, transition: { duration: 0.6, ...easeOut } },
+}
+
+/* ── Logo mark ─────────────────────────────────────── */
+function AuraLogo({ size = 32 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
+      <circle cx="20" cy="20" r="3.5" fill="#C8A97A"/>
+      <circle cx="20" cy="20" r="8"   fill="none" stroke="#C8A97A" strokeWidth="1.2" opacity="0.65"/>
+      <circle cx="20" cy="20" r="13.5" fill="none" stroke="#C8A97A" strokeWidth="0.8" opacity="0.35"/>
+      <circle cx="20" cy="20" r="18.5" fill="none" stroke="#C8A97A" strokeWidth="0.5" opacity="0.16"/>
+    </svg>
+  )
+}
+
+/* ── Data ──────────────────────────────────────────── */
+const SLIDES = [
+  { bg: '#0E0C0A', accent: '#C8A97A', label: 'ESTÉTICA · PREMIUM', h1: 'Resultados', h2: 'que enamoran', note: 'Tratamientos de precisión' },
+  { bg: '#0A0C0E', accent: '#8B9CC8', label: 'SKINCARE · LIFESTYLE', h1: 'Tu piel,', h2: 'transformada', note: 'Rutina de alto rendimiento' },
+  { bg: '#0A0E0A', accent: '#7AB898', label: 'WELLNESS · MARCA', h1: 'Bienestar', h2: 'sin límites', note: 'Contenido que convierte' },
 ]
 
 const FEATURES = [
-  { icon: Wand2, label: 'AI Carousel Generator', desc: 'Genera 10 slides premium desde un prompt. Copy, diseño e imágenes en segundos.' },
-  { icon: Image, label: 'AI Image Engine', desc: 'Imágenes hiperrealistas con Flux AI. Calidad editorial de campaña internacional.' },
-  { icon: Zap, label: 'Viral Hook Generator', desc: 'La IA crea ganchos que detienen el scroll y disparan el engagement.' },
-  { icon: Layers, label: 'Canvas Editor', desc: 'Editor visual profesional. Edita, arrastra y personaliza cada slide.' },
-  { icon: Palette, label: 'Brand Memory AI', desc: 'La IA aprende tu identidad de marca y la aplica automáticamente.' },
-  { icon: LayoutGrid, label: 'Feed Simulator', desc: 'Previsualiza tu feed antes de publicar. Arrastra y reordena posts.' },
-  { icon: Video, label: 'AI Reels Studio', desc: 'Genera guiones, storyboards y conceptos visuales para tus Reels.' },
-  { icon: Globe, label: 'Multi-format Export', desc: 'Exporta en PNG, JPG y PDF en alta resolución. Listo para publicar.' },
-  { icon: Star, label: 'Premium Templates', desc: 'Biblioteca de plantillas editoriales diseñadas por directores creativos.' },
+  { icon: Wand2,     title: 'AI Carousel Generator', desc: 'De un prompt a 10 slides premium con copy, diseño e imágenes. Segundos, no horas.' },
+  { icon: ImageIcon, title: 'AI Image Engine',        desc: 'Imágenes hiperrealistas generadas con Flux AI. Calidad de campaña internacional.' },
+  { icon: Zap,       title: 'Viral Hook Generator',   desc: 'La IA detecta qué detiene el scroll y genera hooks de alta retención.' },
+  { icon: Layers,    title: 'Canvas Editor',          desc: 'Editor visual profesional. Edita cada elemento con precisión de diseñador.' },
+  { icon: Palette,   title: 'Brand Memory AI',        desc: 'La IA aprende tu identidad de marca y la mantiene consistente siempre.' },
+  { icon: LayoutGrid,title: 'Feed Simulator',         desc: 'Visualiza tu perfil antes de publicar. Arrastra, reordena y optimiza.' },
+  { icon: Video,     title: 'AI Reels Studio',        desc: 'Guiones, storyboards y conceptos visuales para reels de alto impacto.' },
+  { icon: Globe,     title: 'Multi-format Export',    desc: 'PNG, JPG, PDF en alta resolución. Listo para publicar en segundos.' },
+  { icon: Star,      title: 'Premium Templates',      desc: 'Biblioteca curatorial de plantillas diseñadas para máxima conversión.' },
 ]
 
 const STEPS = [
-  { n: '01', title: 'Escribe tu prompt', desc: 'Describe el contenido que quieres. Tema, tono, audiencia. La IA entiende lenguaje natural.' },
-  { n: '02', title: 'La IA diseña todo', desc: '10 slides completos: texto, imágenes premium, hooks virales y CTAs optimizados.' },
-  { n: '03', title: 'Edita y exporta', desc: 'Ajusta lo que necesites en el editor visual y exporta en alta resolución.' },
+  { n: '01', title: 'Escribe tu prompt', desc: 'Describe en lenguaje natural el contenido que quieres. Tema, tono, audiencia, estilo. Sin formularios complejos.' },
+  { n: '02', title: 'AURA diseña todo', desc: 'La IA genera 10 slides completos: estructura, copy, imágenes premium, hooks virales y CTA optimizado.' },
+  { n: '03', title: 'Edita y exporta', desc: 'Ajusta cualquier elemento en el editor visual y exporta en alta resolución listo para publicar.' },
 ]
 
 const TESTIMONIALS = [
-  { name: 'Valentina R.', role: 'Médico Estética · @valentinarest', avatar: 'VR', text: 'En 2 minutos tengo un carrusel que antes me tomaba 3 horas con un diseñador. La calidad es brutal.', stars: 5 },
-  { name: 'Carlos M.', role: 'Branding Agency · @cmbrand', avatar: 'CM', text: 'Mis clientes quedan impresionados. El nivel editorial es de agencia internacional. Lo uso todos los días.', stars: 5 },
-  { name: 'Ana Sofía G.', role: 'Skincare Brand · @anasofiabeauty', avatar: 'AS', text: 'Pasé de publicar 2 veces por semana a 6. El contenido se ve premium y el engagement se triplicó.', stars: 5 },
+  { init: 'VR', name: 'Valentina R.', role: 'Clínica Estética · @valentinaest', text: 'En 90 segundos tengo un carrusel que antes tardaba 3 horas. La calidad visual es de agencia internacional.', stars: 5 },
+  { init: 'CM', name: 'Carlos M.', role: 'Creative Director · @cmstudio_co', text: 'Mis clientes no creen que lo hago solo. El nivel editorial es brutal. Lo uso para todos mis clientes.', stars: 5 },
+  { init: 'AS', name: 'Ana Sofía G.', role: 'Beauty Brand · @anasofiaglam', text: 'Pasé de 3 publicaciones semanales a 7. El engagement se triplicó en 6 semanas. AURA cambió mi negocio.', stars: 5 },
 ]
 
-const NICHES = ['Medicina Estética', 'Skincare', 'Fitness', 'Real Estate', 'Moda', 'Nutrición', 'Coaching', 'Arquitectura', 'Gastronomía', 'Tecnología']
+const NICHES = ['Medicina Estética', 'Skincare', 'Moda', 'Fitness', 'Real Estate', 'Restaurantes', 'Coaching', 'Tecnología', 'Arquitectura', 'Lujo']
 
-// ── Component ─────────────────────────────────────────────────────────────────
+/* ── Component ─────────────────────────────────────── */
 export default function LandingPage() {
   const navigate = useNavigate()
   const { scrollY } = useScroll()
-  const heroY = useTransform(scrollY, [0, 500], [0, -80])
-  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0])
+  const heroParallax = useTransform(scrollY, [0, 600], [0, -60])
+  const heroFade     = useTransform(scrollY, [0, 500], [1, 0])
 
   return (
     <div style={{ background: 'var(--bg)', color: 'var(--text)', overflowX: 'hidden' }}>
 
-      {/* ── Nav ── */}
+      {/* ━━━━━━━━━━━━━━ NAV ━━━━━━━━━━━━━━ */}
       <motion.nav
-        initial={{ y: -20, opacity: 0 }}
+        initial={{ y: -16, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100, borderBottom: '1px solid var(--border)', backdropFilter: 'blur(20px)', background: 'rgba(3,3,3,0.85)' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 28px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 24 }}>
-
+        transition={{ duration: 0.6, ...easeOut }}
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
+          borderBottom: '1px solid var(--border)',
+          backdropFilter: 'blur(24px) saturate(140%)',
+          background: 'rgba(9,8,7,0.88)',
+        }}>
+        <div style={{ maxWidth: 1180, margin: '0 auto', padding: '0 32px', height: 58, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          {/* Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 0 20px rgba(99,102,241,0.4)' }}>
-              <Sparkles size={16} color="white" strokeWidth={2.5} />
-            </div>
-            <span style={{ fontWeight: 800, fontSize: 17, letterSpacing: '-0.02em' }}>
-              Social<span style={{ color: 'var(--indigo-h)' }}>Canvas</span>
+            <AuraLogo size={30} />
+            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.025em', color: 'var(--text)' }}>
+              aura
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {/* Nav links */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {['Características', 'Plantillas', 'Precios'].map(item => (
-              <button key={item} className="btn-ghost" style={{ padding: '6px 14px', fontSize: 13, fontWeight: 500 }}>
+              <button key={item} className="btn btn-ghost" style={{ padding: '6px 14px', fontSize: 13 }}>
                 {item}
               </button>
             ))}
           </div>
 
+          {/* CTA */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button className="btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => navigate('/auth')}>
+            <button className="btn btn-ghost" style={{ padding: '7px 16px', fontSize: 13 }} onClick={() => navigate('/auth')}>
               Entrar
             </button>
-            <button className="btn-primary" style={{ padding: '8px 18px', fontSize: 13 }} onClick={() => navigate('/studio')}>
-              Crear gratis <ArrowRight size={14} />
+            <button className="btn btn-primary" style={{ padding: '8px 18px', fontSize: 13 }} onClick={() => navigate('/studio')}>
+              Crear gratis <ArrowRight size={13} strokeWidth={2.5} />
             </button>
           </div>
         </div>
       </motion.nav>
 
-      {/* ── Hero ── */}
-      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '120px 28px 80px', position: 'relative', overflow: 'hidden' }}>
+      {/* ━━━━━━━━━━━━━━ HERO ━━━━━━━━━━━━━━ */}
+      <section style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '130px 32px 80px', position: 'relative', overflow: 'hidden' }}>
 
-        {/* Background */}
+        {/* Cinematic background */}
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          {/* Grid */}
-          <div className="line-grid" style={{ position: 'absolute', inset: 0, opacity: 0.6 }} />
-          {/* Glow orbs */}
-          <div style={{ position: 'absolute', top: '15%', left: '50%', transform: 'translateX(-50%)', width: 800, height: 500, background: 'radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', top: '30%', left: '15%', width: 400, height: 400, background: 'radial-gradient(ellipse, rgba(139,92,246,0.07) 0%, transparent 70%)', borderRadius: '50%' }} />
-          <div style={{ position: 'absolute', top: '20%', right: '10%', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(196,168,130,0.05) 0%, transparent 70%)', borderRadius: '50%' }} />
-          {/* Fade to black at bottom */}
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 200, background: 'linear-gradient(to bottom, transparent, var(--bg))' }} />
+          <div className="line-grid" style={{ position: 'absolute', inset: 0 }} />
+          {/* Warm glow orbs */}
+          <div style={{ position: 'absolute', top: '18%', left: '50%', transform: 'translateX(-50%)', width: 900, height: 400, background: 'radial-gradient(ellipse, rgba(200,169,122,0.07) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', top: '40%', left: '12%', width: 500, height: 500, background: 'radial-gradient(ellipse, rgba(200,169,122,0.04) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', top: '25%', right: '8%', width: 600, height: 600, background: 'radial-gradient(ellipse, rgba(139,156,200,0.04) 0%, transparent 70%)', borderRadius: '50%' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 220, background: 'linear-gradient(to bottom, transparent, var(--bg))' }} />
         </div>
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity, maxWidth: 900, width: '100%', textAlign: 'center', position: 'relative' }}>
+        <motion.div style={{ y: heroParallax, opacity: heroFade, maxWidth: 860, width: '100%', textAlign: 'center', position: 'relative', zIndex: 2 }}>
 
           {/* Badge */}
-          <motion.div variants={fadeUp} initial="hidden" animate="show" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 32 }}>
-            <div className="badge" style={{ padding: '6px 16px', fontSize: 11 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#818cf8', boxShadow: '0 0 8px #818cf8', animation: 'glow-pulse 2s infinite' }} />
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ...easeOut }}>
+            <div className="badge" style={{ marginBottom: 36, padding: '6px 16px' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animation: 'pulse-dot 2.5s ease-in-out infinite' }} />
               IA GENERATIVA · CONTENIDO PREMIUM
             </div>
           </motion.div>
 
           {/* Headline */}
           <motion.h1
-            variants={fadeUp} initial="hidden" animate="show"
-            transition={{ delay: 0.1 }}
-            className="h-display"
+            className="type-display"
+            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.75, delay: 0.1, ...easeOut }}
             style={{ marginBottom: 24 }}>
-            <span className="text-gradient">Crea contenido viral</span><br />
-            <span className="text-gradient-indigo">con IA en segundos</span>
+            <span className="text-warm">El estudio creativo</span><br />
+            <span className="text-gold">que piensa por ti</span>
           </motion.h1>
 
+          {/* Subhead */}
           <motion.p
-            variants={fadeUp} initial="hidden" animate="show"
-            transition={{ delay: 0.2 }}
-            style={{ fontSize: 18, color: 'var(--text-2)', maxWidth: 580, margin: '0 auto 44px', lineHeight: 1.75, fontWeight: 400 }}>
-            Genera carruseles premium, imágenes cinematográficas y contenido editorial de calidad de agencia. Solo necesitas un prompt.
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2, ...easeOut }}
+            style={{ fontSize: 18, color: 'var(--text-2)', maxWidth: 560, margin: '0 auto 44px', lineHeight: 1.78, fontWeight: 400 }}>
+            Genera carruseles premium, imágenes cinematográficas y contenido editorial de calidad de agencia creativa. Solo un prompt.
           </motion.p>
 
           {/* CTAs */}
           <motion.div
-            variants={fadeUp} initial="hidden" animate="show"
-            transition={{ delay: 0.3 }}
-            style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 56 }}>
-            <button className="btn-hero btn" onClick={() => navigate('/studio')}>
-              <Sparkles size={18} strokeWidth={2.5} />
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.3, ...easeOut }}
+            style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 48 }}>
+            <button className="btn btn-cta" onClick={() => navigate('/studio')} style={{ gap: 10 }}>
+              <Sparkles size={17} strokeWidth={2} />
               Crear mi carrusel gratis
             </button>
-            <button className="btn-ghost-lg btn" onClick={() => navigate('/studio?tab=templates')}>
-              Ver plantillas <ChevronRight size={16} />
+            <button className="btn btn-ghost-lg" onClick={() => navigate('/studio?tab=templates')}>
+              Ver plantillas <ChevronRight size={15} />
             </button>
           </motion.div>
 
-          {/* Trust badges */}
+          {/* Trust line */}
           <motion.div
-            variants={fadeUp} initial="hidden" animate="show"
-            transition={{ delay: 0.4 }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, color: 'var(--text-3)', fontSize: 13 }}>
-            {['Sin API key requerida', 'Resultado en 30 segundos', 'Gratis para empezar'].map(t => (
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.45 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, color: 'var(--text-3)', fontSize: 13, flexWrap: 'wrap' }}>
+            {['Sin API key', 'Listo en 30 segundos', 'Gratis para empezar'].map(t => (
               <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <Check size={14} style={{ color: 'var(--indigo)' }} strokeWidth={2.5} /> {t}
+                <Check size={13} style={{ color: 'var(--accent)' }} strokeWidth={2.5} /> {t}
               </span>
             ))}
           </motion.div>
         </motion.div>
 
-        {/* Floating carousel mockups */}
-        <div style={{ position: 'relative', marginTop: 80, width: '100%', maxWidth: 1000, display: 'flex', justifyContent: 'center', gap: 20, alignItems: 'flex-start' }}>
-          {MOCK_SLIDES.map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 60 + i * 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 + i * 0.15, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        {/* Floating carousel cards */}
+        <div style={{ position: 'relative', marginTop: 88, width: '100%', maxWidth: 920, display: 'flex', justifyContent: 'center', gap: 18, alignItems: 'flex-start', zIndex: 2 }}>
+          {SLIDES.map((s, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, y: 64, rotate: (i - 1) * 4 }}
+              animate={{ opacity: 1, y: 0, rotate: (i - 1) * 3 }}
+              transition={{ delay: 0.55 + i * 0.12, duration: 0.9, ...easeOut }}
               style={{
-                width: 220,
-                aspectRatio: '4/5',
-                borderRadius: 20,
-                overflow: 'hidden',
-                border: '1px solid rgba(255,255,255,0.08)',
+                width: 210, aspectRatio: '4/5', borderRadius: 18,
+                overflow: 'hidden', border: '1px solid rgba(240,234,226,0.08)',
                 boxShadow: 'var(--shadow-float)',
-                flexShrink: 0,
-                transform: `rotate(${(i - 1) * 3}deg)`,
-                animation: `${i % 2 === 0 ? 'float' : 'float-r'} ${5 + i * 0.5}s ease-in-out infinite`,
-                animationDelay: `${i * 0.4}s`,
-                position: 'relative',
-                zIndex: i === 1 ? 2 : 1,
-                scale: i === 1 ? 1.08 : 0.95,
+                flexShrink: 0, position: 'relative',
+                transform: i === 1 ? 'scale(1.06)' : 'scale(0.93)',
+                zIndex: i === 1 ? 3 : 1,
+                animation: `${i % 2 === 0 ? 'float' : 'float-sm'} ${5 + i * 0.8}s ease-in-out infinite`,
+                animationDelay: `${i * 0.6}s`,
               }}>
               <div style={{ position: 'absolute', inset: 0, background: s.bg }} />
-              <img src={s.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35, mixBlendMode: 'luminosity' }} onError={e => { e.target.style.opacity = 0 }} />
-              <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(160deg, ${s.bg.includes('#0c1428') ? 'rgba(12,20,40,0.3)' : 'rgba(10,10,20,0.3)'} 0%, rgba(5,5,15,0.85) 100%)` }} />
-              <div style={{ position: 'absolute', inset: 0, padding: 20, display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontSize: 8, fontWeight: 800, letterSpacing: '0.18em', color: s.accent, background: `${s.accent}15`, padding: '4px 10px', borderRadius: 99, alignSelf: 'flex-start', border: `0.5px solid ${s.accent}30` }}>
+              <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 0%, ${s.accent}08 0%, transparent 60%)` }} />
+              <div style={{ position: 'absolute', inset: 0, padding: 18, display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.18em', color: s.accent, background: `${s.accent}12`, padding: '3px 9px', borderRadius: 99, alignSelf: 'flex-start', border: `0.5px solid ${s.accent}25` }}>
                   {s.label}
                 </span>
                 <div style={{ marginTop: 'auto' }}>
-                  {s.title.map((l, j) => (
-                    <p key={j} style={{ fontFamily: 'Georgia, serif', fontSize: 22, fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{l}</p>
-                  ))}
-                  <p style={{ fontSize: 10, color: s.accent, marginTop: 8, opacity: 0.85 }}>{s.sub}</p>
-                  <div style={{ width: 28, height: 1.5, background: s.accent, marginTop: 12, opacity: 0.7 }} />
+                  <p style={{ fontFamily: "'Georgia', serif", fontSize: 20, fontWeight: 700, color: '#F0EAE2', lineHeight: 1.1 }}>{s.h1}</p>
+                  <p style={{ fontFamily: "'Georgia', serif", fontSize: 20, fontWeight: 700, color: '#F0EAE2', lineHeight: 1.1 }}>{s.h2}</p>
+                  <p style={{ fontSize: 9, color: s.accent, marginTop: 8, opacity: 0.8 }}>{s.note}</p>
+                  <div style={{ width: 24, height: 1.5, background: s.accent, marginTop: 12, opacity: 0.6 }} />
                 </div>
               </div>
             </motion.div>
@@ -235,202 +240,188 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── How it works ── */}
-      <section style={{ padding: '120px 28px', position: 'relative' }}>
+      {/* ━━━━━━━━━━━━━━ HOW IT WORKS ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '120px 32px', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <Section style={{ textAlign: 'center', marginBottom: 72 }}>
-            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Flujo de trabajo</div></motion.div>
-            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
-              <span className="text-gradient">De idea a carrusel</span><br />en 3 pasos
-            </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17, maxWidth: 480, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 72 }}>
+            <div className="badge badge-dim" style={{ marginBottom: 20 }}>Flujo de trabajo</div>
+            <h2 className="type-section" style={{ marginBottom: 16 }}>
+              <span className="text-warm">De idea a carrusel</span><br />
+              <span className="text-gold">en 3 pasos</span>
+            </h2>
+            <p className="type-subhead" style={{ maxWidth: 440, margin: '0 auto' }}>
               Sin diseñador. Sin agencia. Sin esperas.
-            </motion.p>
-          </Section>
+            </p>
+          </FadeUp>
 
-          <Section>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
-              {STEPS.map((s, i) => (
-                <motion.div key={i} variants={scaleIn} style={{ padding: '40px 36px', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 20, position: 'relative', overflow: 'hidden', transition: 'all 0.2s' }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, var(--indigo), transparent)`, opacity: 0.5 }} />
-                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 72, fontWeight: 700, color: 'var(--border-h)', lineHeight: 1, marginBottom: 24, opacity: 0.6 }}>{s.n}</p>
-                  <h3 className="h-card" style={{ marginBottom: 12, color: 'var(--text)' }}>{s.title}</h3>
-                  <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.75 }}>{s.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </Section>
+          <Stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 2 }}>
+            {STEPS.map((s, i) => (
+              <motion.div key={i} variants={cardVariant}
+                style={{ padding: '44px 36px', border: '1px solid var(--border)', background: 'var(--surface)', borderRadius: 20, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg, transparent, var(--accent), transparent)`, opacity: 0.4 }} />
+                <p style={{ fontFamily: "'Georgia', serif", fontSize: 64, fontWeight: 700, color: 'var(--border-h)', lineHeight: 1, marginBottom: 24, letterSpacing: '-0.02em' }}>{s.n}</p>
+                <h3 className="type-heading" style={{ marginBottom: 12 }}>{s.title}</h3>
+                <p className="type-body" style={{ fontSize: 14, lineHeight: 1.78 }}>{s.desc}</p>
+              </motion.div>
+            ))}
+          </Stagger>
         </div>
       </section>
 
-      {/* ── Features ── */}
-      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)' }}>
+      {/* ━━━━━━━━━━━━━━ FEATURES ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '120px 32px', borderTop: '1px solid var(--border)' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <Section style={{ textAlign: 'center', marginBottom: 72 }}>
-            <motion.div variants={fadeUp}><div className="badge badge-gold" style={{ marginBottom: 20 }}>Capacidades IA</div></motion.div>
-            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
-              Una agencia creativa<br /><span className="text-gradient-aurora">impulsada por IA</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17, maxWidth: 500, margin: '0 auto' }}>
-              Todo lo que necesitas para crear contenido premium, en un solo lugar.
-            </motion.p>
-          </Section>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 72 }}>
+            <div className="badge" style={{ marginBottom: 20 }}>Capacidades IA</div>
+            <h2 className="type-section" style={{ marginBottom: 16 }}>
+              <span className="text-warm">Una agencia creativa</span><br />
+              <span className="text-gold-soft">dentro de tu pantalla</span>
+            </h2>
+            <p className="type-subhead" style={{ maxWidth: 460, margin: '0 auto' }}>
+              Todo lo que necesitas para crear contenido premium, sin intermediarios.
+            </p>
+          </FadeUp>
 
-          <Section>
-            <motion.div variants={staggerFast} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
-              {FEATURES.map((f, i) => (
-                <motion.div key={i} variants={scaleIn}
-                  className="card"
-                  style={{ padding: 28, cursor: 'default' }}
-                  whileHover={{ y: -4, borderColor: 'rgba(255,255,255,0.12)' }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--indigo-deep)', border: '1px solid rgba(99,102,241,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
-                    <f.icon size={20} style={{ color: 'var(--indigo-h)' }} strokeWidth={1.8} />
-                  </div>
-                  <h3 className="h-card" style={{ marginBottom: 10 }}>{f.label}</h3>
-                  <p style={{ color: 'var(--text-2)', fontSize: 14, lineHeight: 1.7 }}>{f.desc}</p>
-                </motion.div>
-              ))}
+          <Stagger delay={0.05} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 10 }}>
+            {FEATURES.map((f, i) => (
+              <motion.div key={i} variants={cardVariant}
+                className="card"
+                style={{ padding: 28 }}
+                whileHover={{ y: -3, borderColor: 'var(--accent-border)' }}
+                transition={{ duration: 0.2 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 11, background: 'var(--accent-deep)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+                  <f.icon size={19} style={{ color: 'var(--accent)' }} strokeWidth={1.8} />
+                </div>
+                <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 9, letterSpacing: '-0.01em' }}>{f.title}</h3>
+                <p style={{ color: 'var(--text-2)', fontSize: 13.5, lineHeight: 1.72 }}>{f.desc}</p>
+              </motion.div>
+            ))}
+          </Stagger>
+        </div>
+      </section>
+
+      {/* ━━━━━━━━━━━━━━ TEMPLATE GALLERY ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '120px 0', borderTop: '1px solid var(--border)', overflow: 'hidden' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 32px' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 60 }}>
+            <div className="badge badge-dim" style={{ marginBottom: 20 }}>Plantillas</div>
+            <h2 className="type-section" style={{ marginBottom: 16 }}>
+              <span className="text-warm">Diseños de nivel</span><br />
+              <span className="text-gold">editorial premium</span>
+            </h2>
+          </FadeUp>
+        </div>
+
+        {/* Scrolling strip */}
+        <div style={{ display: 'flex', gap: 12, overflowX: 'auto', padding: '0 32px 8px', scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+          {[...SLIDES, ...SLIDES, ...SLIDES, ...SLIDES].map((s, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: (i % 4) * 0.06, duration: 0.5, ...easeOut }}
+              whileHover={{ y: -8, scale: 1.02, transition: { duration: 0.22 } }}
+              style={{ width: 170, aspectRatio: '4/5', borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0, position: 'relative', cursor: 'pointer', boxShadow: 'var(--shadow)' }}>
+              <div style={{ position: 'absolute', inset: 0, background: s.bg }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 55%)' }} />
+              <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
+                <p style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.15em', color: s.accent, marginBottom: 5 }}>{s.label}</p>
+                <p style={{ fontFamily: "'Georgia', serif", fontSize: 14, fontWeight: 700, color: '#F0EAE2', lineHeight: 1.2 }}>{s.h1}</p>
+              </div>
             </motion.div>
-          </Section>
+          ))}
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 40 }}>
+          <button className="btn btn-ghost" onClick={() => navigate('/studio')} style={{ padding: '11px 24px' }}>
+            Explorar plantillas <ArrowRight size={14} />
+          </button>
         </div>
       </section>
 
-      {/* ── Template Gallery ── */}
-      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <Section style={{ textAlign: 'center', marginBottom: 60 }}>
-            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Plantillas</div></motion.div>
-            <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 16 }}>
-              <span className="text-gradient">Diseños de nivel</span><br />editorial premium
-            </motion.h2>
-            <motion.p variants={fadeUp} style={{ color: 'var(--text-2)', fontSize: 17 }}>
-              Más de 50 plantillas diseñadas por directores creativos.
-            </motion.p>
-          </Section>
+      {/* ━━━━━━━━━━━━━━ NICHES ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '72px 32px', borderTop: '1px solid var(--border)' }}>
+        <FadeUp style={{ textAlign: 'center', marginBottom: 28 }}>
+          <p className="type-label">Funciona para cualquier industria</p>
+        </FadeUp>
+        <Stagger style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+          {NICHES.map((n, i) => (
+            <motion.span key={i} variants={cardVariant} className="chip" style={{ padding: '8px 18px', fontSize: 13 }}>{n}</motion.span>
+          ))}
+        </Stagger>
+      </section>
 
-          {/* Scrolling template strip */}
-          <div style={{ display: 'flex', gap: 14, overflowX: 'auto', paddingBottom: 8, scrollbarWidth: 'none' }}>
-            {[...MOCK_SLIDES, ...MOCK_SLIDES, ...MOCK_SLIDES].map((s, i) => (
-              <motion.div key={i}
-                initial={{ opacity: 0, x: 40 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.1, duration: 0.5 }}
-                whileHover={{ y: -8, scale: 1.03 }}
-                style={{ width: 180, aspectRatio: '4/5', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)', flexShrink: 0, position: 'relative', cursor: 'pointer', boxShadow: 'var(--shadow-card)' }}>
-                <div style={{ position: 'absolute', inset: 0, background: s.bg }} />
-                <img src={s.img} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, mixBlendMode: 'luminosity' }} onError={e => { e.target.style.opacity = 0 }} />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 60%)' }} />
-                <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
-                  <p style={{ fontSize: 7, fontWeight: 800, letterSpacing: '0.15em', color: s.accent, marginBottom: 4 }}>{s.label}</p>
-                  <p style={{ fontFamily: 'Georgia, serif', fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>{s.title[0]}</p>
+      {/* ━━━━━━━━━━━━━━ TESTIMONIALS ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '120px 32px', borderTop: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+          <FadeUp style={{ textAlign: 'center', marginBottom: 64 }}>
+            <div className="badge badge-dim" style={{ marginBottom: 20 }}>Testimonios</div>
+            <h2 className="type-section">
+              <span className="text-warm">Creadores que ya</span><br />
+              <span className="text-gold">publican con AURA</span>
+            </h2>
+          </FadeUp>
+
+          <Stagger style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 14 }}>
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div key={i} variants={cardVariant} className="card" style={{ padding: 32 }}
+                whileHover={{ y: -4, borderColor: 'var(--border-h)', transition: { duration: 0.2 } }}>
+                <div style={{ display: 'flex', gap: 3, marginBottom: 22 }}>
+                  {Array(t.stars).fill(0).map((_, j) => <Star key={j} size={13} fill="#C8A97A" color="#C8A97A" />)}
+                </div>
+                <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.78, marginBottom: 26, fontStyle: 'italic' }}>
+                  "{t.text}"
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--accent-deep)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: 'var(--accent)', flexShrink: 0 }}>
+                    {t.init}
+                  </div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 700 }}>{t.name}</p>
+                    <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.role}</p>
+                  </div>
                 </div>
               </motion.div>
             ))}
-          </div>
-
-          <Section style={{ textAlign: 'center', marginTop: 40 }}>
-            <motion.button variants={fadeUp} className="btn-ghost btn" onClick={() => navigate('/studio?tab=templates')} style={{ padding: '11px 28px' }}>
-              Ver todas las plantillas <ArrowRight size={15} />
-            </motion.button>
-          </Section>
+          </Stagger>
         </div>
       </section>
 
-      {/* ── Niches ── */}
-      <section style={{ padding: '60px 28px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <Section style={{ textAlign: 'center', marginBottom: 32 }}>
-            <motion.p variants={fadeUp} style={{ color: 'var(--text-3)', fontSize: 12, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 20 }}>
-              Funciona para cualquier industria
-            </motion.p>
-          </Section>
-          <Section>
-            <motion.div variants={staggerFast} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {NICHES.map((n, i) => (
-                <motion.span key={i} variants={fadeIn} className="chip" style={{ fontSize: 13, padding: '8px 18px' }}>{n}</motion.span>
-              ))}
-            </motion.div>
-          </Section>
-        </div>
-      </section>
-
-      {/* ── Testimonials ── */}
-      <section style={{ padding: '120px 28px', borderTop: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <Section style={{ textAlign: 'center', marginBottom: 60 }}>
-            <motion.div variants={fadeUp}><div className="badge" style={{ marginBottom: 20 }}>Testimonios</div></motion.div>
-            <motion.h2 variants={fadeUp} className="h-section">
-              <span className="text-gradient">Creadores que ya</span><br />publican con IA
-            </motion.h2>
-          </Section>
-
-          <Section>
-            <motion.div variants={stagger} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-              {TESTIMONIALS.map((t, i) => (
-                <motion.div key={i} variants={scaleIn} className="card" style={{ padding: 32 }} whileHover={{ y: -4 }}>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 20 }}>
-                    {Array(t.stars).fill(0).map((_, j) => <Star key={j} size={14} fill="#f59e0b" color="#f59e0b" />)}
-                  </div>
-                  <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.75, marginBottom: 24, fontStyle: 'italic' }}>
-                    "{t.text}"
-                  </p>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--indigo), var(--violet))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                      {t.avatar}
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 14, fontWeight: 700 }}>{t.name}</p>
-                      <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{t.role}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </Section>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section style={{ padding: '140px 28px', position: 'relative', overflow: 'hidden', borderTop: '1px solid var(--border)' }}>
+      {/* ━━━━━━━━━━━━━━ FINAL CTA ━━━━━━━━━━━━━━ */}
+      <section style={{ padding: '140px 32px', borderTop: '1px solid var(--border)', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 900, height: 500, background: 'radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%)' }} />
-          <div className="dot-grid" style={{ position: 'absolute', inset: 0, opacity: 0.5 }} />
+          <div className="dot-grid" style={{ position: 'absolute', inset: 0 }} />
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 800, height: 400, background: 'radial-gradient(ellipse, rgba(200,169,122,0.06) 0%, transparent 70%)' }} />
         </div>
 
-        <Section style={{ textAlign: 'center', position: 'relative' }}>
-          <motion.div variants={fadeUp} style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
-            <div style={{ width: 72, height: 72, borderRadius: 20, background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 20px 80px rgba(99,102,241,0.45)', animation: 'pulse-glow 3s ease infinite' }}>
-              <Sparkles size={32} color="white" strokeWidth={2} />
+        <FadeUp style={{ textAlign: 'center', position: 'relative', zIndex: 2 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
+            <div style={{ width: 68, height: 68, borderRadius: 20, background: 'var(--accent-deep)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', animation: 'glow-aura 3s ease-in-out infinite' }}>
+              <AuraLogo size={36} />
             </div>
-          </motion.div>
-          <motion.h2 variants={fadeUp} className="h-section" style={{ marginBottom: 20 }}>
-            Empieza a crear<br /><span className="text-gradient-indigo">ahora mismo</span>
-          </motion.h2>
-          <motion.p variants={fadeUp} style={{ fontSize: 17, color: 'var(--text-2)', maxWidth: 520, margin: '0 auto 44px', lineHeight: 1.8 }}>
-            Sin tarjeta de crédito. Sin configuraciones técnicas. Solo escribe tu idea y la IA hace el resto.
-          </motion.p>
-          <motion.div variants={fadeUp} style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button className="btn-hero btn" style={{ padding: '15px 36px', fontSize: 16 }} onClick={() => navigate('/studio')}>
-              <Sparkles size={20} strokeWidth={2.5} /> Crear mi primer carrusel
-            </button>
-          </motion.div>
-          <motion.p variants={fadeUp} style={{ marginTop: 20, color: 'var(--text-3)', fontSize: 13 }}>
-            Gratis para siempre en el plan básico
-          </motion.p>
-        </Section>
+          </div>
+          <h2 className="type-section" style={{ marginBottom: 20 }}>
+            <span className="text-warm">Empieza a crear</span><br />
+            <span className="text-gold">ahora mismo</span>
+          </h2>
+          <p style={{ fontSize: 17, color: 'var(--text-2)', maxWidth: 500, margin: '0 auto 44px', lineHeight: 1.8 }}>
+            Sin tarjeta de crédito. Sin configuraciones técnicas.<br />Solo escribe tu idea — AURA hace el resto.
+          </p>
+          <button className="btn btn-cta" style={{ padding: '15px 36px', fontSize: 16 }} onClick={() => navigate('/studio')}>
+            <Sparkles size={20} strokeWidth={2} /> Crear mi primer carrusel
+          </button>
+          <p style={{ marginTop: 20, color: 'var(--text-3)', fontSize: 13 }}>Gratis para siempre en el plan básico</p>
+        </FadeUp>
       </section>
 
-      {/* ── Footer ── */}
-      <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 28px' }}>
+      {/* ━━━━━━━━━━━━━━ FOOTER ━━━━━━━━━━━━━━ */}
+      <footer style={{ borderTop: '1px solid var(--border)', padding: '32px 32px' }}>
         <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Sparkles size={13} color="white" />
-            </div>
-            <span style={{ fontWeight: 800, fontSize: 15 }}>Social<span style={{ color: 'var(--indigo-h)' }}>Canvas</span></span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AuraLogo size={26} />
+            <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em' }}>aura</span>
           </div>
-          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>© 2026 SocialCanvas · Hecho con IA para creadores premium</p>
+          <p style={{ color: 'var(--text-3)', fontSize: 13 }}>© 2026 AURA · AI-powered creative studio</p>
         </div>
       </footer>
     </div>

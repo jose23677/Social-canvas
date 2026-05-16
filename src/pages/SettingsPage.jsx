@@ -55,8 +55,8 @@ export default function SettingsPage() {
           Estos datos se aplican automáticamente en tus carruseles generados.
         </p>
         {[
-          { k: 'name', label: 'Nombre / Clínica', ph: 'Dr. José Colmenarez' },
-          { k: 'handle', label: 'Instagram', ph: '@drcolmenarez' },
+          { k: 'name', label: 'Nombre / Clínica', ph: 'Ej: Mi Clínica Premium' },
+          { k: 'handle', label: 'Instagram', ph: '@tuusuario' },
           { k: 'specialty', label: 'Especialidad', ph: 'Medicina Estética' },
         ].map(({ k, label, ph }) => (
           <div key={k} style={{ marginBottom: 16 }}>
